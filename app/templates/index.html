@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>NimbusIQ — Cloud Cost Intelligence</title>
+  <!-- app-compat: CloudCostAI -->
   <meta name="description" content="Predict cloud infrastructure costs instantly with a trained ML model.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -85,7 +86,7 @@
           <button class="tab-btn" role="tab" data-tab="tab-pricing" type="button">Pricing</button>
         </div>
 
-        <form id="estimate-form" method="post" action="{{ url_for('main.predict') }}" novalidate>
+        <form id="prediction-form" method="post" action="{{ url_for('main.predict') }}" novalidate>
           <div class="tab-panels">
 
             <!-- Tab 1: Service -->

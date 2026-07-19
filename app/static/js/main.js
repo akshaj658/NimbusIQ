@@ -73,7 +73,7 @@
   // ── Form submit state ──────────────────────────────────────────────────────
 
   function initForm() {
-    const form = document.getElementById('estimate-form');
+    const form = document.getElementById('prediction-form');
     if (!form) return;
     form.addEventListener('submit', function () {
       const btn     = document.getElementById('submit-btn');
@@ -86,7 +86,7 @@
   }
 
   window.resetEstimateForm = function () {
-    const form = document.getElementById('estimate-form');
+    const form = document.getElementById('prediction-form');
     if (form) form.reset();
     document.getElementById('cpu-val') && (document.getElementById('cpu-val').textContent = '50%');
     document.getElementById('mem-val') && (document.getElementById('mem-val').textContent = '50%');
