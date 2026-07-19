@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>StadiumIQ — Operations Command Hub | FIFA World Cup 2026</title>
+  <meta name="description" content="FIFA World Cup 2026 Operations Command Hub — 13 real-time operational domains managed by AI.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="page">
+
+  <!-- ── Topbar ── -->
+  <header class="topbar">
+    <a class="topbar-left" href="{{ url_for('main.index') }}">
+      <span class="logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="12" rx="10" ry="6"/><ellipse cx="12" cy="12" rx="4" ry="2.5"/><line x1="12" y1="6" x2="12" y2="18"/></svg>
+      </span>
+      <span><span class="logo-name">StadiumIQ</span><span class="logo-tag">&nbsp;·&nbsp;Ops Hub</span></span>
+    </a>
+    <nav class="topbar-right">
+      <span class="nav-badge"><span class="live-dot"></span>LIVE</span>
+      <a href="{{ url_for('main.index') }}" class="nav-link">Cost Assessment</a>
+      <a href="{{ url_for('main.ops_hub') }}" class="nav-link active">Operations Hub</a>
+      <a href="{{ url_for('main.ai_console') }}" class="nav-link">AI Console</a>
+      <a href="{{ url_for('main.readiness') }}" class="nav-link">Readiness</a>
+      {% if config.SHOW_ADMIN %}<a href="{{ url_for('main.admin') }}" class="nav-link">Dashboard</a>{% endif %}
+    </nav>
+  </header>
+
+  <!-- ── Status Bar ── -->
+  <div class="status-bar" id="status-bar" aria-live="polite">
+    <span class="status-bar-label">WORLD CUP 2026</span>
+    <div class="status-bar-venues" id="status-venues">
+      {% for v in status.venues %}
+      <span class="status-chip {{ v.alert_class }}">{{ v.venue }} — {{ v.capacity_pct }}%</span>
+      {% endfor %}
+    </div>
+    <span class="status-bar-right" id="status-global">{{ status.global_alert }}</span>
+  </div>
+
+  <!-- ── Ops Hub Body ── -->
+  <div class="ops-wrap">
+
+    <!-- Hub Header -->
+    <div class="ops-header fade-up">
+      <div>
+        <p class="admin-eyebrow">FIFA World Cup 2026 · AI-Powered Operations Platform</p>
+        <h1 class="ops-title">Operations Command Hub</h1>
+        <p class="ops-subtitle">13 operational domains monitored and managed by StadiumIQ AI. Select a domain to receive real-time AI guidance, or use the <a href="{{ url_for('main.ai_console') }}">AI Console</a> for incident response.</p>
+      </div>
+      <div class="ops-summary-pills">
+        <span class="summary-pill green">{{ status.venues | selectattr('alert_class', 'eq', 'ok') | list | length }} venues nominal</span>
+        <span class="summary-pill amber">{{ status.venues | selectattr('alert_class', 'eq', 'warn') | list | length }} elevated</span>
+        <span class="summary-pill red">{{ status.venues | selectattr('alert_class', 'eq', 'danger') | list | length }} critical</span>
+        <span class="summary-pill blue">{{ "{:,}".format(status.total_fans_today) }} fans today</span>
+      </div>
+    </div>
+
+    <!-- 13 Domain Cards Grid -->
+    <div class="domain-grid fade-up" aria-label="Operational domains">
+      {% for domain in domains %}
+      <article class="domain-card domain-{{ domain.color }}" aria-label="{{ domain.title }}">
+        <div class="domain-card-header">
+          <span class="domain-icon domain-icon-{{ domain.icon }}">
+            {% if domain.icon == 'crowd' %}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            {% elif domain.icon == 'ai' %}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            {% elif domain.icon == 'security' %}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            {% elif domain.icon == 'medical' %}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            {% elif domain.icon == 'staff' %}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            {% elif domain.icon == 'fan' %}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            {% elif domain.icon == 'gate' %}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+            {% elif domain.icon == 'parking' %}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+            {% elif domain.icon == 'food' %}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+            {% elif domain.icon == 'weather' %}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 5 5 12 12 19"/></svg>
+            {% elif domain.icon == 'readiness' %}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            {% elif domain.icon == 'evacuation' %}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            {% elif domain.icon == 'maintenance' %}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+            {% endif %}
+          </span>
+          <div class="domain-card-title-wrap">
+            <h2 class="domain-card-title">{{ domain.title }}</h2>
+          </div>
+        </div>
+        <p class="domain-card-desc">{{ domain.description }}</p>
+        <div class="domain-card-actions">
+          <a class="btn btn-primary btn-sm"
+             href="{{ url_for('main.ai_console') }}?domain={{ domain.id }}"
+             aria-label="Get AI guidance for {{ domain.title }}">
+            AI Guidance
+          </a>
+          {% if domain.zone_hint %}
+          <a class="btn btn-ghost btn-sm"
+             href="{{ url_for('main.index') }}?zone={{ domain.zone_hint }}"
+             aria-label="Run cost assessment for {{ domain.title }}">
+            Cost Assessment
+          </a>
+          {% endif %}
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+
+    <!-- Quick stats row -->
+    <div class="ops-stats-row fade-up">
+      <div class="ops-stat">
+        <span class="ops-stat-num">{{ status.active_matches }}</span>
+        <span class="ops-stat-label">Active Matches</span>
+      </div>
+      <div class="ops-stat">
+        <span class="ops-stat-num">{{ "{:,}".format(status.total_fans_today) }}</span>
+        <span class="ops-stat-label">Fans Today</span>
+      </div>
+      <div class="ops-stat">
+        <span class="ops-stat-num">13</span>
+        <span class="ops-stat-label">Operational Domains</span>
+      </div>
+      <div class="ops-stat">
+        <span class="ops-stat-num">{{ domains|length }}</span>
+        <span class="ops-stat-label">AI-Monitored Workflows</span>
+      </div>
+    </div>
+
+  </div><!-- /ops-wrap -->
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <span class="footer-brand">StadiumIQ</span>
+      <span class="footer-sep">·</span>
+      <span class="footer-text">FIFA World Cup 2026 Smart Stadium Operations Platform</span>
+      <span class="footer-sep">·</span>
+      <span class="footer-text">Powered by ML + Gemini AI</span>
+    </div>
+  </footer>
+
+</div><!-- /page -->
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

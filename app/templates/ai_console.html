@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>StadiumIQ — AI Incident Console | FIFA World Cup 2026</title>
+  <meta name="description" content="Real-time AI-powered incident guidance for FIFA World Cup 2026 stadium operations teams.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="page">
+
+  <!-- ── Topbar ── -->
+  <header class="topbar">
+    <a class="topbar-left" href="{{ url_for('main.index') }}">
+      <span class="logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="12" rx="10" ry="6"/><ellipse cx="12" cy="12" rx="4" ry="2.5"/><line x1="12" y1="6" x2="12" y2="18"/></svg>
+      </span>
+      <span><span class="logo-name">StadiumIQ</span><span class="logo-tag">&nbsp;·&nbsp;AI Console</span></span>
+    </a>
+    <nav class="topbar-right">
+      <span class="nav-badge"><span class="live-dot"></span>LIVE</span>
+      <a href="{{ url_for('main.index') }}" class="nav-link">Cost Assessment</a>
+      <a href="{{ url_for('main.ops_hub') }}" class="nav-link">Operations Hub</a>
+      <a href="{{ url_for('main.ai_console') }}" class="nav-link active">AI Console</a>
+      <a href="{{ url_for('main.readiness') }}" class="nav-link">Readiness</a>
+      {% if config.SHOW_ADMIN %}<a href="{{ url_for('main.admin') }}" class="nav-link">Dashboard</a>{% endif %}
+    </nav>
+  </header>
+
+  <!-- ── Status Bar ── -->
+  <div class="status-bar" id="status-bar" aria-live="polite">
+    <span class="status-bar-label">WORLD CUP 2026</span>
+    <div class="status-bar-venues" id="status-venues">
+      <span class="status-chip ok">AI Console — Ready</span>
+      <span class="status-chip ok">Gemini AI — {{ 'Connected' if gemini_available else 'Fallback Mode' }}</span>
+    </div>
+    <span class="status-bar-right" id="status-global">AI DIRECTOR ONLINE</span>
+  </div>
+
+  <!-- ── Console Body ── -->
+  <div class="console-wrap">
+
+    <!-- Left: Domain selector + context form -->
+    <div class="console-left">
+      <div class="console-header fade-up">
+        <p class="admin-eyebrow">FIFA World Cup 2026 · Real-Time AI Guidance</p>
+        <h1 class="ops-title">AI Incident Console</h1>
+        <p class="ops-subtitle">Describe any operational situation to the StadiumIQ AI Director. Select the relevant domain to get targeted, expert-level guidance in seconds.</p>
+      </div>
+
+      <div class="console-form-card fade-up">
+        <!-- Domain selector -->
+        <div class="field">
+          <label class="field-label" for="domain-select">
+            Operational Domain
+            <span class="field-hint">Select the domain that best matches your situation</span>
+          </label>
+          <select id="domain-select" aria-label="Select operational domain">
+            {% for domain in domains %}
+            <option value="{{ domain.id }}" {% if selected_domain == domain.id %}selected{% endif %}>
+              {{ domain.title }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Context fields -->
+        <div class="console-context-grid">
+          <div class="field">
+            <label class="field-label" for="ctx-venue">Venue</label>
+            <select id="ctx-venue">
+              <option value="">Select venue...</option>
+              {% for r, label in venue_aliases.items() %}
+              <option value="{{ label }}">{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="field">
+            <label class="field-label" for="ctx-crowd">Crowd Size (approx.)</label>
+            <input type="number" id="ctx-crowd" placeholder="e.g. 65000" min="0">
+          </div>
+          <div class="field">
+            <label class="field-label" for="ctx-kickoff">Time to / Since Kickoff</label>
+            <input type="text" id="ctx-kickoff" placeholder="e.g. T-45 min or 67 min played">
+          </div>
+          <div class="field">
+            <label class="field-label" for="ctx-severity">Severity Level</label>
+            <select id="ctx-severity">
+              <option value="routine">Routine / Planning</option>
+              <option value="elevated">Elevated / Monitoring</option>
+              <option value="urgent">Urgent — Action Required</option>
+              <option value="critical">Critical — Immediate Response</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Situation description -->
+        <div class="field">
+          <label class="field-label" for="situation-input">
+            Situation Report
+            <span class="field-hint">Describe what is happening in as much detail as possible. The AI Director needs specifics to give actionable guidance.</span>
+          </label>
+          <textarea
+            id="situation-input"
+            rows="7"
+            placeholder="Describe the situation..."
+            aria-label="Situation description"
+            aria-required="true"
+          ></textarea>
+          <div class="example-banner" id="example-banner">
+            <span class="example-label">Example for this domain:</span>
+            <span class="example-text" id="example-text"></span>
+            <button class="btn btn-ghost btn-xs" type="button" id="use-example-btn">Use this example</button>
+          </div>
+        </div>
+
+        <div class="console-form-footer">
+          <button class="btn btn-primary" type="button" id="ai-query-btn" aria-label="Submit situation to AI Director">
+            <span class="btn-label">Get AI Guidance</span>
+            <span class="spinner d-none" role="status" aria-hidden="true"></span>
+          </button>
+          <button class="btn btn-ghost" type="button" id="clear-console-btn">Clear</button>
+        </div>
+      </div>
+
+      <!-- Domain quick-select pills -->
+      <div class="domain-pills fade-up" aria-label="Quick domain selection">
+        {% for domain in domains %}
+        <button
+          class="domain-pill domain-pill-{{ domain.color }} {% if selected_domain == domain.id %}active{% endif %}"
+          type="button"
+          data-domain="{{ domain.id }}"
+          data-example="{{ domain.example }}"
+          data-placeholder="{{ domain.placeholder }}"
+          aria-pressed="{{ 'true' if selected_domain == domain.id else 'false' }}"
+        >{{ domain.title }}</button>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Right: AI response panel -->
+    <div class="console-right">
+      <div class="console-response-panel" id="response-panel">
+        <div class="console-response-header">
+          <span class="ai-panel-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          </span>
+          <span class="ai-panel-title">StadiumIQ AI Director</span>
+          <span id="response-source-badge" class="ai-source-badge local">Awaiting input</span>
+        </div>
+
+        <!-- Empty state -->
+        <div class="console-empty-state" id="console-empty">
+          <div class="console-empty-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          </div>
+          <h3>Ready for your situation report</h3>
+          <p>Select a domain, describe what's happening, and the StadiumIQ AI Director will provide immediate, actionable operational guidance.</p>
+          <div class="console-capability-grid">
+            <div class="console-cap">
+              <span class="cap-icon">🚨</span>
+              <span class="cap-label">Emergency response</span>
+            </div>
+            <div class="console-cap">
+              <span class="cap-icon">👥</span>
+              <span class="cap-label">Crowd management</span>
+            </div>
+            <div class="console-cap">
+              <span class="cap-icon">🛡️</span>
+              <span class="cap-label">Security deployment</span>
+            </div>
+            <div class="console-cap">
+              <span class="cap-icon">🏥</span>
+              <span class="cap-label">Medical response</span>
+            </div>
+            <div class="console-cap">
+              <span class="cap-icon">🌦️</span>
+              <span class="cap-label">Weather impact</span>
+            </div>
+            <div class="console-cap">
+              <span class="cap-icon">🚗</span>
+              <span class="cap-label">Parking & transport</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading state -->
+        <div class="console-loading d-none" id="console-loading">
+          <div class="console-loading-spinner"></div>
+          <p>AI Director is analysing the situation...</p>
+        </div>
+
+        <!-- Response content -->
+        <div class="console-response-content d-none" id="console-content">
+          <div class="response-domain-badge" id="response-domain-badge"></div>
+          <div class="response-text" id="response-text"></div>
+          <div class="response-actions">
+            <button class="btn btn-ghost btn-sm" type="button" id="copy-response-btn" aria-label="Copy AI response">Copy Response</button>
+            <button class="btn btn-ghost btn-sm" type="button" id="new-query-btn">New Query</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Session history -->
+      <div class="console-history-panel" id="history-panel">
+        <div class="panel-header">
+          <span class="panel-title">Session Log</span>
+          <button class="panel-link btn-link" type="button" id="clear-history-btn">Clear</button>
+        </div>
+        <div class="console-history-list" id="history-list">
+          <p class="history-empty">No queries this session.</p>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /console-wrap -->
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <span class="footer-brand">StadiumIQ</span>
+      <span class="footer-sep">·</span>
+      <span class="footer-text">AI Incident Console — Powered by Gemini AI</span>
+      <span class="footer-sep">·</span>
+      <span class="footer-text">FIFA World Cup 2026</span>
+    </div>
+  </footer>
+
+</div><!-- /page -->
+
+<script>
+  // Domain data injected server-side for JS
+  window.STADIUMIQ_DOMAINS = {{ domains_json | safe }};
+</script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script src="{{ url_for('static', filename='js/console.js') }}"></script>
+</body>
+</html>

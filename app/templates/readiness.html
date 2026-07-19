@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>StadiumIQ — Match-Day Readiness | FIFA World Cup 2026</title>
+  <meta name="description" content="Pre-match readiness assessment across all 13 operational domains for FIFA World Cup 2026.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="page">
+
+  <header class="topbar">
+    <a class="topbar-left" href="{{ url_for('main.index') }}">
+      <span class="logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="12" rx="10" ry="6"/><ellipse cx="12" cy="12" rx="4" ry="2.5"/><line x1="12" y1="6" x2="12" y2="18"/></svg>
+      </span>
+      <span><span class="logo-name">StadiumIQ</span><span class="logo-tag">&nbsp;·&nbsp;Readiness</span></span>
+    </a>
+    <nav class="topbar-right">
+      <span class="nav-badge"><span class="live-dot"></span>LIVE</span>
+      <a href="{{ url_for('main.index') }}" class="nav-link">Cost Assessment</a>
+      <a href="{{ url_for('main.ops_hub') }}" class="nav-link">Operations Hub</a>
+      <a href="{{ url_for('main.ai_console') }}" class="nav-link">AI Console</a>
+      <a href="{{ url_for('main.readiness') }}" class="nav-link active">Readiness</a>
+      {% if config.SHOW_ADMIN %}<a href="{{ url_for('main.admin') }}" class="nav-link">Dashboard</a>{% endif %}
+    </nav>
+  </header>
+
+  <div class="status-bar" id="status-bar" aria-live="polite">
+    <span class="status-bar-label">WORLD CUP 2026</span>
+    <div class="status-bar-venues" id="status-venues">
+      {% for v in status.venues %}
+      <span class="status-chip {{ v.alert_class }}">{{ v.venue }} — {{ v.capacity_pct }}%</span>
+      {% endfor %}
+    </div>
+    <span class="status-bar-right">{{ status.global_alert }}</span>
+  </div>
+
+  <div class="readiness-wrap">
+
+    <div class="ops-header fade-up">
+      <div>
+        <p class="admin-eyebrow">FIFA World Cup 2026 · Pre-Match Operations</p>
+        <h1 class="ops-title">Match-Day Readiness Assessment</h1>
+        <p class="ops-subtitle">Complete this checklist before every match. Use the AI Director to generate a readiness report, or manually update each domain status and submit for AI analysis.</p>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <a href="{{ url_for('main.ai_console') }}?domain=match_readiness" class="btn btn-primary">AI Readiness Report</a>
+        <a href="{{ url_for('main.ops_hub') }}" class="btn btn-ghost">Operations Hub</a>
+      </div>
+    </div>
+
+    <!-- Venue & Match Config -->
+    <div class="readiness-config-card fade-up">
+      <div class="panel-header" style="padding:0 0 12px;">
+        <span class="panel-title">Match Configuration</span>
+      </div>
+      <div class="readiness-config-grid">
+        <div class="field">
+          <label class="field-label" for="r-venue">Host Venue</label>
+          <select id="r-venue">
+            <option value="">Select venue...</option>
+            {% for r, label in venue_aliases.items() %}
+            <option value="{{ label }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label class="field-label" for="r-attendance">Expected Attendance</label>
+          <input type="number" id="r-attendance" placeholder="e.g. 82000">
+        </div>
+        <div class="field">
+          <label class="field-label" for="r-kickoff">Kickoff Time</label>
+          <input type="time" id="r-kickoff">
+        </div>
+        <div class="field">
+          <label class="field-label" for="r-teams">Teams</label>
+          <input type="text" id="r-teams" placeholder="e.g. Brazil vs Argentina">
+        </div>
+      </div>
+    </div>
+
+    <!-- Domain Checklist -->
+    <div class="readiness-domains fade-up">
+      <div class="panel-header" style="padding:0 0 12px;">
+        <span class="panel-title">Operational Domain Status</span>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost btn-sm" type="button" id="all-green-btn">Mark All Green</button>
+          <button class="btn btn-primary btn-sm" type="button" id="generate-report-btn">Generate AI Report</button>
+        </div>
+      </div>
+
+      <div class="readiness-grid" id="readiness-grid">
+        {% for domain in domains %}
+        <div class="readiness-domain-row" data-domain-id="{{ domain.id }}">
+          <div class="readiness-domain-info">
+            <span class="readiness-domain-title">{{ domain.title }}</span>
+            <span class="readiness-domain-desc">{{ domain.description[:80] }}...</span>
+          </div>
+          <div class="readiness-domain-controls">
+            <select class="readiness-status-select" data-domain="{{ domain.id }}" aria-label="{{ domain.title }} status">
+              <option value="green">🟢 Green — Ready</option>
+              <option value="amber" selected>🟡 Amber — Minor Issues</option>
+              <option value="red">🔴 Red — Not Ready</option>
+            </select>
+            <input type="text" class="readiness-notes" data-domain="{{ domain.id }}"
+                   placeholder="Notes / issues..."
+                   aria-label="{{ domain.title }} notes">
+            <a class="btn btn-ghost btn-xs"
+               href="{{ url_for('main.ai_console') }}?domain={{ domain.id }}"
+               aria-label="Get AI guidance for {{ domain.title }}">AI</a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- AI Report Output -->
+    <div class="readiness-report-card fade-up d-none" id="readiness-report">
+      <div class="ai-panel-header">
+        <span class="ai-panel-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        </span>
+        <span class="ai-panel-title">AI Match-Day Readiness Report</span>
+        <span class="ai-source-badge gemini" id="report-source-badge">Gemini AI</span>
+        <button class="btn btn-ghost btn-xs" type="button" id="close-report-btn" style="margin-left:auto;">Dismiss</button>
+      </div>
+      <div class="readiness-verdict" id="readiness-verdict"></div>
+      <div class="response-text" id="readiness-response-text" style="padding:16px 20px;"></div>
+    </div>
+
+  </div><!-- /readiness-wrap -->
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <span class="footer-brand">StadiumIQ</span>
+      <span class="footer-sep">·</span>
+      <span class="footer-text">Match-Day Readiness — FIFA World Cup 2026</span>
+    </div>
+  </footer>
+
+</div>
+<script>window.STADIUMIQ_DOMAINS = {{ domains_json | safe }};</script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script src="{{ url_for('static', filename='js/readiness.js') }}"></script>
+</body>
+</html>

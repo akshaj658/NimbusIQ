@@ -1,3 +1,4 @@
+import json
 import os
 import hmac
 from functools import wraps, lru_cache
@@ -7,8 +8,13 @@ import joblib
 from flask import Blueprint, Response, flash, redirect, render_template, request, url_for, current_app
 
 from src.utils.config import MODEL_DIR
-from app.ai_assistant import ZONE_ALIASES, VENUE_ALIASES, get_ai_recommendations, get_stadium_status
-
+from app.ai_assistant import (
+    ZONE_ALIASES, VENUE_ALIASES,
+    OPERATIONAL_DOMAINS,
+    get_ai_recommendations,
+    get_stadium_status,
+    query_ai_console,
+)
 from app.services import (
     delete_prediction,
     generate_csv,
@@ -39,13 +45,11 @@ def _check_auth_header(auth_header: str) -> bool:
 def require_basic_auth(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
-        # If admin not enabled, deny
         if not current_app.config.get("SHOW_ADMIN"):
             return Response("Not Found", status=404)
         auth = request.headers.get("Authorization", "")
         if _check_auth_header(auth):
             return func(*args, **kwargs)
-        # Request auth
         resp = Response("Unauthorized", status=401)
         resp.headers["WWW-Authenticate"] = 'Basic realm="StadiumIQ Admin"'
         return resp
@@ -57,8 +61,6 @@ def _get_form_options() -> dict[str, list[str]]:
     try:
         preprocessor = joblib.load(MODEL_DIR / "preprocessor.pkl")
         encoder = preprocessor.named_transformers_["categorical"]
-        # encoder.categories_ returns a list of arrays corresponding to the categories.
-        # Categorical columns in build_preprocessor are ["Service Name", "Usage Unit", "Region/Zone"]
         service_names = encoder.categories_[0].tolist()
         usage_units = encoder.categories_[1].tolist()
         regions = encoder.categories_[2].tolist()
@@ -74,15 +76,19 @@ def _get_form_options() -> dict[str, list[str]]:
 
 
 def _template_context(options: dict) -> dict:
-    """Build the shared template context with stadium aliasing."""
+    """Shared template context with stadium aliasing."""
     return {
         "service_names": options["service_names"],
         "usage_units": options["usage_units"],
         "regions": options["regions"],
         "zone_aliases": ZONE_ALIASES,
         "venue_aliases": VENUE_ALIASES,
+        "domains": OPERATIONAL_DOMAINS,
+        "domains_json": json.dumps(OPERATIONAL_DOMAINS),
     }
 
+
+# ── Core routes ──────────────────────────────────────────────────────────────
 
 @main_bp.route("/")
 def index():
@@ -126,10 +132,7 @@ def predict():
         predicted_cost, breakdown = perform_prediction(values)
         flash("Operational assessment complete.", "success")
         history = get_prediction_history(limit=5)
-
-        # Generate AI recommendations in the same request (fast enough for sync)
         ai_result = get_ai_recommendations(values, predicted_cost)
-
         return render_template(
             "index.html",
             history=history,
@@ -155,6 +158,57 @@ def predict():
         )
 
 
+# ── Operations Hub ────────────────────────────────────────────────────────────
+
+@main_bp.route("/ops")
+def ops_hub():
+    """13-domain Operations Command Hub."""
+    status = get_stadium_status()
+    return render_template(
+        "ops_hub.html",
+        domains=OPERATIONAL_DOMAINS,
+        domains_json=json.dumps(OPERATIONAL_DOMAINS),
+        status=status,
+        zone_aliases=ZONE_ALIASES,
+        venue_aliases=VENUE_ALIASES,
+    )
+
+
+# ── AI Incident Console ───────────────────────────────────────────────────────
+
+@main_bp.route("/ai-console")
+def ai_console():
+    """Real-time AI incident console."""
+    selected_domain = request.args.get("domain", OPERATIONAL_DOMAINS[0]["id"])
+    gemini_available = bool(os.environ.get("GEMINI_API_KEY", "").strip())
+    return render_template(
+        "ai_console.html",
+        domains=OPERATIONAL_DOMAINS,
+        domains_json=json.dumps(OPERATIONAL_DOMAINS),
+        selected_domain=selected_domain,
+        gemini_available=gemini_available,
+        zone_aliases=ZONE_ALIASES,
+        venue_aliases=VENUE_ALIASES,
+    )
+
+
+# ── Match-Day Readiness ───────────────────────────────────────────────────────
+
+@main_bp.route("/readiness")
+def readiness():
+    """Match-day readiness checklist."""
+    status = get_stadium_status()
+    return render_template(
+        "readiness.html",
+        domains=OPERATIONAL_DOMAINS,
+        domains_json=json.dumps(OPERATIONAL_DOMAINS),
+        status=status,
+        venue_aliases=VENUE_ALIASES,
+    )
+
+
+# ── API endpoints ─────────────────────────────────────────────────────────────
+
 @main_bp.route("/history")
 def history():
     search = request.args.get("q", "", type=str)
@@ -164,7 +218,7 @@ def history():
 
 @main_bp.route("/api/form-options")
 def api_form_options():
-    """Return the valid dropdown options loaded from the trained preprocessor."""
+    """Return the valid dropdown options from the trained preprocessor."""
     options = _get_form_options()
     return options
 
@@ -172,8 +226,8 @@ def api_form_options():
 @main_bp.route("/api/ai-assist", methods=["POST"])
 def api_ai_assist():
     """
-    GenAI endpoint: accepts sanitised form values + predicted cost,
-    returns AI-powered stadium operations recommendations from Gemini.
+    Post-prediction Gemini AI recommendations endpoint.
+    Accepts sanitised form values + predicted cost.
     """
     try:
         payload = request.get_json(force=True, silent=True) or {}
@@ -185,11 +239,35 @@ def api_ai_assist():
         return {"error": str(exc), "recommendations": [], "source": "error"}, 500
 
 
+@main_bp.route("/api/ai-query", methods=["POST"])
+def api_ai_query():
+    """
+    AI Incident Console endpoint.
+    Accepts domain_id, situation description, and optional context dict.
+    Returns domain-specific Gemini AI guidance.
+    """
+    try:
+        payload = request.get_json(force=True, silent=True) or {}
+        domain_id = str(payload.get("domain_id", "ai_recommendations"))
+        situation = str(payload.get("situation", "")).strip()
+        context   = payload.get("context", {}) or {}
+
+        if not situation:
+            return {"error": "situation is required", "response": "", "source": "error"}, 400
+
+        result = query_ai_console(domain_id, situation, context)
+        return result, 200
+    except Exception as exc:
+        return {"error": str(exc), "response": str(exc), "source": "error"}, 500
+
+
 @main_bp.route("/api/stadium-status")
 def api_stadium_status():
-    """Return simulated live stadium status metrics for the command dashboard."""
+    """Live simulated stadium capacity metrics."""
     return get_stadium_status(), 200
 
+
+# ── Admin routes ──────────────────────────────────────────────────────────────
 
 @main_bp.route("/admin")
 @require_basic_auth
