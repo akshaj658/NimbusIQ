@@ -1,15 +1,16 @@
 """
-app/pricing.py — Post-Model Business Adjustment Engine
+app/pricing.py — StadiumIQ Post-Model Operational Cost Calibration Engine
 
-Applies deterministic business rules on top of the raw Linear Regression
-model output. Does NOT alter training or the model itself.
+Applies deterministic business rules on top of the raw ML model output to
+produce accurate stadium operational cost estimates for FIFA World Cup 2026.
+Does NOT alter model training or the underlying regression pipeline.
 
-Adjustment pipeline:
+Calibration pipeline:
   raw_model_cost (INR, from model.predict)
-  → Regional Calibration Multiplier
-  → High Egress Penalty
-  → Workload Density Multiplier
-  → INR Rate Adjustment (env-configurable fine-tune)
+  → Venue-Based Regional Calibration Multiplier
+  → High Fan-Egress / Network Load Penalty
+  → High-Utilisation (Crowd Density) Surcharge
+  → INR Rate Adjustment (env-configurable)
   = final_cost_inr
 """
 from __future__ import annotations
@@ -19,8 +20,8 @@ import os
 from typing import Any
 
 # ---------------------------------------------------------------------------
-# Regional calibration multipliers (relative to US-central1 baseline = 1.00)
-# Reflects real-world GCP regional price premiums.
+# Venue-based calibration multipliers (relative to US-central1 baseline = 1.00)
+# Models cost premiums across FIFA World Cup 2026 host stadium regions.
 # ---------------------------------------------------------------------------
 REGIONAL_MULTIPLIERS: dict[str, float] = {
     # United States (baseline)

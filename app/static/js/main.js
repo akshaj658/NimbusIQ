@@ -1,12 +1,13 @@
 /**
- * NimbusIQ — UI Controller
+ * StadiumIQ — FIFA World Cup 2026 Operations Intelligence
+ * UI Controller: theme, tabs, sliders, form, admin, live-status polling
  */
 (function () {
   'use strict';
 
   // ── Theme ──────────────────────────────────────────────────────────────────
 
-  const THEME_KEY = 'nimbusiq-theme';
+  const THEME_KEY = 'stadiumiq-theme';
 
   function applyTheme(t) {
     document.documentElement.setAttribute('data-theme', t);
@@ -17,7 +18,7 @@
   }
 
   function initTheme() {
-    const saved      = localStorage.getItem(THEME_KEY);
+    const saved       = localStorage.getItem(THEME_KEY);
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     applyTheme(saved || (prefersDark ? 'dark' : 'light'));
 
@@ -41,7 +42,10 @@
     index = Math.max(0, Math.min(index, tabIds.length - 1));
     currentTab = index;
 
-    btns.forEach((b, i)   => b.classList.toggle('active', i === index));
+    btns.forEach((b, i)   => {
+      b.classList.toggle('active', i === index);
+      b.setAttribute('aria-selected', i === index ? 'true' : 'false');
+    });
     panels.forEach((p, i) => p.classList.toggle('active', i === index));
 
     const prev = document.getElementById('tab-prev');
@@ -80,7 +84,7 @@
       const label   = btn?.querySelector('.btn-label');
       const spinner = btn?.querySelector('.spinner');
       if (btn)     btn.setAttribute('disabled', 'true');
-      if (label)   label.textContent = 'Calculating...';
+      if (label)   label.textContent = 'Analysing...';
       if (spinner) spinner.classList.remove('d-none');
     });
   }
@@ -99,7 +103,7 @@
     document.addEventListener('click', async function (e) {
       if (!e.target?.classList.contains('del-btn')) return;
       const id = e.target.getAttribute('data-id');
-      if (!id || !confirm('Remove this prediction?')) return;
+      if (!id || !confirm('Remove this assessment record?')) return;
 
       e.target.setAttribute('disabled', 'true');
       try {
@@ -131,7 +135,7 @@
     if (!tbody) return;
     tbody.innerHTML = '';
     if (!rows?.length) {
-      tbody.innerHTML = '<tr><td colspan="6" style="color:var(--text-3);font-size:0.8rem;padding:16px 12px">No predictions match your search.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" style="color:var(--text-3);font-size:0.8rem;padding:16px 12px">No assessments match your search.</td></tr>';
       return;
     }
     rows.forEach(function (item) {
@@ -139,10 +143,10 @@
       tr.innerHTML =
         '<td>' + item.id + '</td>' +
         '<td>' + item.timestamp + '</td>' +
-        '<td>' + item.service_name + '</td>' +
-        '<td>' + item.region + '</td>' +
+        '<td>' + (item.service_name || '') + '</td>' +
+        '<td>' + (item.region || '') + '</td>' +
         '<td>' + formatINR(item.predicted_cost) + '</td>' +
-        '<td><button class="del-btn" data-id="' + item.id + '" type="button">Remove</button></td>';
+        '<td><button class="del-btn" data-id="' + item.id + '" type="button" aria-label="Remove assessment ' + item.id + '">Remove</button></td>';
       tbody.appendChild(tr);
     });
   }
@@ -164,12 +168,41 @@
       const q = document.getElementById('search-input')?.value || '';
       const a = Object.assign(document.createElement('a'), {
         href: '/download?q=' + encodeURIComponent(q),
-        download: 'nimbusiq_predictions.csv'
+        download: 'stadiumiq_operations.csv'
       });
       document.body.appendChild(a);
       a.click();
       a.remove();
     });
+  }
+
+  // ── Live stadium status polling ────────────────────────────────────────────
+
+  function renderStatusBar(data) {
+    const venuesEl = document.getElementById('status-venues');
+    const globalEl = document.getElementById('status-global');
+    if (!venuesEl || !data?.venues) return;
+
+    venuesEl.innerHTML = data.venues.map(function (v) {
+      return '<span class="status-chip ' + v.alert_class + '">' +
+        v.venue + ' \u2014 ' + v.capacity_pct + '% Capacity' +
+        '</span>';
+    }).join('');
+
+    if (globalEl) globalEl.textContent = data.global_alert || 'ALL SYSTEMS NOMINAL';
+  }
+
+  async function fetchStadiumStatus() {
+    try {
+      const res = await fetch('/api/stadium-status');
+      if (res.ok) renderStatusBar(await res.json());
+    } catch (_) {}
+  }
+
+  function initStatusBar() {
+    if (!document.getElementById('status-bar')) return;
+    fetchStadiumStatus();
+    setInterval(fetchStadiumStatus, 30_000);
   }
 
   // ── Boot ───────────────────────────────────────────────────────────────────
@@ -182,6 +215,7 @@
     initForm();
     initDeleteHandlers();
     initAdmin();
+    initStatusBar();
   });
 
 }());

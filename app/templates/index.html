@@ -3,9 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>NimbusIQ — Cloud Cost Intelligence</title>
+  <title>StadiumIQ — FIFA World Cup 2026 Operations Intelligence</title>
   <!-- app-compat: CloudCostAI -->
-  <meta name="description" content="Predict cloud infrastructure costs instantly with a trained ML model.">
+  <meta name="description" content="AI-powered smart stadium command center for FIFA World Cup 2026. Real-time crowd management, emergency response, and operational cost intelligence.">
+  <meta name="keywords" content="FIFA World Cup 2026, stadium operations, crowd management, smart stadium, AI operations">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -18,15 +19,23 @@
   <header class="topbar">
     <a class="topbar-left" href="{{ url_for('main.index') }}">
       <span class="logo-icon">
-        <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        <!-- Stadium/pitch SVG -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <ellipse cx="12" cy="12" rx="10" ry="6"/>
+          <ellipse cx="12" cy="12" rx="4" ry="2.5"/>
+          <line x1="12" y1="6" x2="12" y2="18"/>
+        </svg>
       </span>
       <span>
-        <span class="logo-name">NimbusIQ</span>
-        <span class="logo-tag"> &nbsp;·&nbsp; Cloud Cost Intelligence</span>
+        <span class="logo-name">StadiumIQ</span>
+        <span class="logo-tag">&nbsp;·&nbsp; FIFA WC 2026 Ops</span>
       </span>
     </a>
     <nav class="topbar-right">
-      <a href="{{ url_for('main.index') }}" class="nav-link active">Estimates</a>
+      <span class="nav-badge">
+        <span class="live-dot"></span> LIVE
+      </span>
+      <a href="{{ url_for('main.index') }}" class="nav-link active">Command Center</a>
       {% if config.SHOW_ADMIN %}
       <a href="{{ url_for('main.admin') }}" class="nav-link">Dashboard</a>
       {% endif %}
@@ -37,6 +46,18 @@
     </nav>
   </header>
 
+  <!-- ── Live Status Bar ── -->
+  <div class="status-bar" id="status-bar" aria-live="polite" aria-label="Live stadium status">
+    <span class="status-bar-label">WORLD CUP 2026</span>
+    <div class="status-bar-venues" id="status-venues">
+      <span class="status-chip ok">MetLife Stadium — 72% Capacity</span>
+      <span class="status-chip warn">AT&T Stadium — 91% Capacity</span>
+      <span class="status-chip ok">SoFi Stadium — 65% Capacity</span>
+      <span class="status-chip ok">Hard Rock Stadium — 78% Capacity</span>
+    </div>
+    <span class="status-bar-right" id="status-global">ALL SYSTEMS NOMINAL</span>
+  </div>
+
   <!-- ── Workspace ── -->
   <div class="workspace">
 
@@ -45,20 +66,24 @@
 
       <!-- Hero -->
       <div class="hero fade-up">
-        <p class="hero-eyebrow">ML-Powered Forecasting</p>
-        <h1>Predict your cloud spend,<br>before it happens</h1>
-        <p class="hero-desc">Enter your infrastructure parameters and get an accurate cost estimate powered by a trained regression pipeline — with full cost breakdown.</p>
+        <p class="hero-eyebrow">
+          <span class="eyebrow-badge">FIFA World Cup 2026</span>
+          AI-Powered Operations Intelligence
+        </p>
+        <h1>Command your stadium.<br><span class="hero-accent">Before the crowd arrives.</span></h1>
+        <p class="hero-desc">StadiumIQ combines a trained ML regression pipeline with Google Gemini AI to forecast operational costs, optimize resource deployment, and deliver real-time crowd management intelligence across all 16 FIFA World Cup 2026 host venues.</p>
         <div class="hero-actions">
-          <a class="btn btn-primary" href="#form-anchor">Run Estimate</a>
+          <a class="btn btn-primary" href="#form-anchor">Run Assessment</a>
           {% if config.SHOW_ADMIN %}
-          <a class="btn btn-ghost" href="{{ url_for('main.admin') }}">Dashboard</a>
+          <a class="btn btn-ghost" href="{{ url_for('main.admin') }}">Command Dashboard</a>
           {% endif %}
         </div>
         <div class="tags">
-          <span class="tag">SQLite history</span>
-          <span class="tag">Regional pricing</span>
-          <span class="tag">Egress penalties</span>
-          <span class="tag">Cost breakdown</span>
+          <span class="tag">Crowd Management</span>
+          <span class="tag">Emergency Response</span>
+          <span class="tag">Venue Intelligence</span>
+          <span class="tag">AI Cost Forecasting</span>
+          <span class="tag">16 Host Venues</span>
         </div>
       </div>
 
@@ -66,113 +91,157 @@
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
           {% for category, message in messages %}
-          <div class="alert alert-{{ category }} fade-up">{{ message }}</div>
+          <div class="alert alert-{{ category }} fade-up" role="alert">{{ message }}</div>
           {% endfor %}
         {% endif %}
       {% endwith %}
 
-      <!-- Estimation form with tabs -->
+      <!-- Operational Assessment Form -->
       <div class="form-card fade-up" id="form-anchor">
         <div class="form-card-header">
-          <span class="form-card-title">Infrastructure Cost Estimator</span>
+          <span class="form-card-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+            Operational Assessment
+          </span>
           <button class="btn btn-ghost btn-sm" type="button" onclick="resetEstimateForm()">Clear</button>
         </div>
 
         <!-- Tab bar -->
-        <div class="tabs" role="tablist">
-          <button class="tab-btn active" role="tab" data-tab="tab-service" type="button">Service</button>
-          <button class="tab-btn" role="tab" data-tab="tab-infra" type="button">Infrastructure</button>
-          <button class="tab-btn" role="tab" data-tab="tab-timeline" type="button">Timeline</button>
-          <button class="tab-btn" role="tab" data-tab="tab-pricing" type="button">Pricing</button>
+        <div class="tabs" role="tablist" aria-label="Assessment form sections">
+          <button class="tab-btn active" role="tab" data-tab="tab-service" type="button" aria-selected="true">Zone & Venue</button>
+          <button class="tab-btn" role="tab" data-tab="tab-infra" type="button" aria-selected="false">Crowd Load</button>
+          <button class="tab-btn" role="tab" data-tab="tab-timeline" type="button" aria-selected="false">Schedule</button>
+          <button class="tab-btn" role="tab" data-tab="tab-pricing" type="button" aria-selected="false">Cost Rate</button>
         </div>
 
         <form id="prediction-form" method="post" action="{{ url_for('main.predict') }}" novalidate>
           <div class="tab-panels">
 
-            <!-- Tab 1: Service -->
+            <!-- Tab 1: Zone & Venue -->
             <div class="tab-panel active" id="tab-service">
               <div class="field-grid">
                 <div class="field">
-                  <label class="field-label" for="service-select">Service Name</label>
-                  <select id="service-select" name="service_name" required>
-                    <option value="">Select service</option>
+                  <label class="field-label" for="service-select">
+                    Stadium Zone / Operations Category
+                    <span class="field-hint">Select the primary operational area</span>
+                  </label>
+                  <select id="service-select" name="service_name" required aria-describedby="service-hint">
+                    <option value="">Select zone...</option>
                     {% for s in service_names %}
-                    <option value="{{ s }}" {% if values.get('service_name') == s %}selected{% endif %}>{{ s }}</option>
+                    <option value="{{ s }}" {% if values.get('service_name') == s %}selected{% endif %}>
+                      {{ zone_aliases.get(s, s) }}
+                    </option>
                     {% endfor %}
                   </select>
                 </div>
                 <div class="field">
-                  <label class="field-label" for="unit-select">Usage Unit</label>
+                  <label class="field-label" for="unit-select">
+                    Resource Unit
+                    <span class="field-hint">Hours / GB data / Service Requests</span>
+                  </label>
                   <select id="unit-select" name="usage_unit" required>
-                    <option value="">Select unit</option>
+                    <option value="">Select unit...</option>
                     {% for u in usage_units %}
                     <option value="{{ u }}" {% if values.get('usage_unit') == u %}selected{% endif %}>{{ u }}</option>
                     {% endfor %}
                   </select>
                 </div>
                 <div class="field">
-                  <label class="field-label" for="region-select">Region</label>
+                  <label class="field-label" for="region-select">
+                    Venue / Stadium Location
+                    <span class="field-hint">FIFA World Cup 2026 host venue</span>
+                  </label>
                   <select id="region-select" name="region" required>
-                    <option value="">Select region</option>
+                    <option value="">Select venue...</option>
                     {% for r in regions %}
-                    <option value="{{ r }}" {% if values.get('region') == r %}selected{% endif %}>{{ r }}</option>
+                    <option value="{{ r }}" {% if values.get('region') == r %}selected{% endif %}>
+                      {{ venue_aliases.get(r, r) }}
+                    </option>
                     {% endfor %}
                   </select>
                 </div>
                 <div class="field">
-                  <label class="field-label" for="usage-qty">Usage Quantity</label>
-                  <input type="number" id="usage-qty" name="usage_quantity" step="0.01" min="0" placeholder="e.g. 1000" value="{{ values.get('usage_quantity','') }}" required>
+                  <label class="field-label" for="usage-qty">
+                    Resource Volume
+                    <span class="field-hint">Quantity of resource units consumed</span>
+                  </label>
+                  <input type="number" id="usage-qty" name="usage_quantity" step="0.01" min="0" placeholder="e.g. 75000" value="{{ values.get('usage_quantity','') }}" required>
                 </div>
               </div>
             </div>
 
-            <!-- Tab 2: Infrastructure -->
+            <!-- Tab 2: Crowd Load -->
             <div class="tab-panel" id="tab-infra">
+              <div class="field-help-banner">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                CPU = System Activity Level &nbsp;|&nbsp; Memory = Crowd Capacity Utilization &nbsp;|&nbsp; Network = Fan Flow (GB/hr)
+              </div>
               <div class="field-grid">
                 <div class="field">
-                  <label class="field-label" for="cpu-slider">CPU Utilization</label>
+                  <label class="field-label" for="cpu-slider">
+                    System Activity Level
+                    <span class="field-hint">Operational technology load (0–100%)</span>
+                  </label>
                   <div class="slider-wrap">
-                    <input type="range" id="cpu-slider" name="cpu" min="0" max="100" step="1" value="{{ values.get('cpu','50') }}" required>
+                    <input type="range" id="cpu-slider" name="cpu" min="0" max="100" step="1" value="{{ values.get('cpu','50') }}" required aria-valuemin="0" aria-valuemax="100">
                     <span class="slider-val" id="cpu-val">{{ values.get('cpu','50') }}%</span>
                   </div>
                 </div>
                 <div class="field">
-                  <label class="field-label" for="mem-slider">Memory Utilization</label>
+                  <label class="field-label" for="mem-slider">
+                    Crowd Capacity Utilization
+                    <span class="field-hint">% of stadium capacity currently occupied</span>
+                  </label>
                   <div class="slider-wrap">
-                    <input type="range" id="mem-slider" name="memory" min="0" max="100" step="1" value="{{ values.get('memory','50') }}" required>
+                    <input type="range" id="mem-slider" name="memory" min="0" max="100" step="1" value="{{ values.get('memory','50') }}" required aria-valuemin="0" aria-valuemax="100">
                     <span class="slider-val" id="mem-val">{{ values.get('memory','50') }}%</span>
                   </div>
                 </div>
                 <div class="field">
-                  <label class="field-label" for="net-in">Network Inbound (GB)</label>
+                  <label class="field-label" for="net-in">
+                    Fan Arrival Flow (GB/hr)
+                    <span class="field-hint">Inbound data from ticketing & access control</span>
+                  </label>
                   <input type="number" id="net-in" name="network_in" step="0.01" min="0" placeholder="0.00" value="{{ values.get('network_in','') }}" required>
                 </div>
                 <div class="field">
-                  <label class="field-label" for="net-out">Network Outbound (GB)</label>
+                  <label class="field-label" for="net-out">
+                    Fan Exit Flow (GB/hr)
+                    <span class="field-hint">Outbound data from broadcast & egress systems</span>
+                  </label>
                   <input type="number" id="net-out" name="network_out" step="0.01" min="0" placeholder="0.00" value="{{ values.get('network_out','') }}" required>
                 </div>
               </div>
             </div>
 
-            <!-- Tab 3: Timeline -->
+            <!-- Tab 3: Schedule -->
             <div class="tab-panel" id="tab-timeline">
               <div class="field-grid">
                 <div class="field">
-                  <label class="field-label" for="start-date">Usage Start Date</label>
+                  <label class="field-label" for="start-date">
+                    Event Start Date
+                    <span class="field-hint">Match day / operational period start</span>
+                  </label>
                   <input type="date" id="start-date" name="usage_start" value="{{ values.get('usage_start','') }}" required>
                 </div>
                 <div class="field">
-                  <label class="field-label" for="end-date">Usage End Date</label>
+                  <label class="field-label" for="end-date">
+                    Event End Date
+                    <span class="field-hint">Match day / operational period end</span>
+                  </label>
                   <input type="date" id="end-date" name="usage_end" value="{{ values.get('usage_end','') }}" required>
                 </div>
               </div>
             </div>
 
-            <!-- Tab 4: Pricing -->
+            <!-- Tab 4: Cost Rate -->
             <div class="tab-panel" id="tab-pricing">
               <div class="field-grid field-grid-1">
                 <div class="field">
-                  <label class="field-label" for="cost-qty">Cost per Quantity (USD)</label>
+                  <label class="field-label" for="cost-qty">
+                    Cost Rate per Unit (USD)
+                    <span class="field-hint">Operational cost per resource unit (e.g. cost per staff-hour)</span>
+                  </label>
                   <input type="number" id="cost-qty" name="cost_per_quantity" step="0.0001" min="0" placeholder="e.g. 0.023" value="{{ values.get('cost_per_quantity','') }}" required>
                 </div>
               </div>
@@ -186,7 +255,7 @@
               <button type="button" class="btn btn-ghost btn-sm" id="tab-next" onclick="stepTab(1)">Next</button>
             </div>
             <button class="btn btn-primary" type="submit" id="submit-btn">
-              <span class="btn-label">Get Estimate</span>
+              <span class="btn-label">Run Assessment</span>
               <span class="spinner d-none" role="status" aria-hidden="true"></span>
             </button>
           </div>
@@ -201,9 +270,9 @@
       <!-- Result panel -->
       <div class="result-panel {% if prediction_result is not none %}has-result pulse{% endif %}" id="result-panel">
         <div class="result-header">
-          <span class="result-label">Estimated Cost</span>
+          <span class="result-label">Operational Cost Estimate</span>
           {% if prediction_result is not none %}
-          <span class="result-status ready"><span class="result-dot"></span> Calculated</span>
+          <span class="result-status ready"><span class="result-dot"></span> Assessed</span>
           {% else %}
           <span class="result-status idle"><span class="result-dot"></span> Awaiting input</span>
           {% endif %}
@@ -215,29 +284,29 @@
               <span class="result-currency">&#8377;</span>{{ "%.2f"|format(prediction_result) }}
             </div>
           </div>
-          <p class="result-note">Approximate cost for selected workload</p>
+          <p class="result-note">Estimated operational cost for this assessment period</p>
 
           {% if cost_breakdown %}
           <div class="breakdown">
             <p class="breakdown-title">Cost Breakdown</p>
             <div class="breakdown-row">
-              <span class="breakdown-key">Baseline (Qty × Rate)</span>
+              <span class="breakdown-key">Baseline (Volume × Rate)</span>
               <span class="breakdown-val">&#8377; {{ "%.4f"|format(cost_breakdown.baseline_cost) }}</span>
             </div>
             <div class="breakdown-row">
-              <span class="breakdown-key">ML Coefficient</span>
+              <span class="breakdown-key">AI Complexity Multiplier</span>
               <span class="breakdown-val">{{ "%.4f"|format(cost_breakdown.ml_coefficient) }}×</span>
             </div>
             <div class="breakdown-row">
-              <span class="breakdown-key">Regional Multiplier</span>
+              <span class="breakdown-key">Venue Premium</span>
               <span class="breakdown-val">{{ "%.4f"|format(cost_breakdown.regional_multiplier) }}×</span>
             </div>
             <div class="breakdown-row">
-              <span class="breakdown-key">Egress Factor</span>
+              <span class="breakdown-key">Egress Load Factor</span>
               <span class="breakdown-val {% if cost_breakdown.egress_multiplier > 1 %}hi{% endif %}">{{ "%.4f"|format(cost_breakdown.egress_multiplier) }}×</span>
             </div>
             <div class="breakdown-row">
-              <span class="breakdown-key">Workload Density</span>
+              <span class="breakdown-key">High-Utilisation Surcharge</span>
               <span class="breakdown-val {% if cost_breakdown.workload_multiplier > 1 %}hi{% endif %}">{{ "%.4f"|format(cost_breakdown.workload_multiplier) }}×</span>
             </div>
             <div class="breakdown-row breakdown-total">
@@ -251,26 +320,76 @@
           <div class="result-amount">
             <span style="color: var(--text-3); font-size: 1.8rem; font-weight: 700;">--</span>
           </div>
-          <p class="result-note">Fill in the form and click Get Estimate to see your cloud cost prediction here.</p>
+          <p class="result-note">Configure your operational parameters and run an assessment to receive cost intelligence and AI-powered stadium recommendations.</p>
           {% endif %}
         </div>
       </div>
 
+      <!-- AI Recommendations Panel -->
+      {% if ai_result %}
+      <div class="ai-panel fade-up" id="ai-panel">
+        <div class="ai-panel-header">
+          <span class="ai-panel-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 0 1 10 10c0 5.52-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2z"/><path d="M12 6v6l4 2"/></svg>
+          </span>
+          <span class="ai-panel-title">StadiumIQ AI Director</span>
+          <span class="ai-source-badge {% if ai_result.source == 'gemini' %}gemini{% else %}local{% endif %}">
+            {% if ai_result.source == 'gemini' %}Gemini AI{% else %}AI Analysis{% endif %}
+          </span>
+        </div>
+        <div class="ai-context">
+          <span class="ai-ctx-item">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>
+            {{ ai_result.zone_display }}
+          </span>
+          <span class="ai-ctx-sep">·</span>
+          <span class="ai-ctx-item">{{ ai_result.venue_display }}</span>
+        </div>
+        <ul class="ai-recommendations" role="list">
+          {% for rec in ai_result.recommendations %}
+          <li class="ai-rec-item" role="listitem">
+            <span class="ai-rec-num">{{ loop.index }}</span>
+            <span class="ai-rec-text">{{ rec }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+        <div class="ai-panel-footer">
+          <span>Real-time operational guidance powered by generative AI</span>
+        </div>
+      </div>
+      {% else %}
+      <div class="ai-panel ai-panel-empty" id="ai-panel">
+        <div class="ai-panel-header">
+          <span class="ai-panel-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 0 1 10 10c0 5.52-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2z"/><path d="M12 6v6l4 2"/></svg>
+          </span>
+          <span class="ai-panel-title">StadiumIQ AI Director</span>
+          <span class="ai-source-badge local">Gemini AI</span>
+        </div>
+        <div class="ai-empty-content">
+          <div class="ai-empty-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+          </div>
+          <p>Run an operational assessment to receive AI-generated stadium management recommendations tailored to your zone, venue, and crowd parameters.</p>
+        </div>
+      </div>
+      {% endif %}
+
       <!-- Recent history -->
       <div class="history-panel">
         <div class="panel-header">
-          <span class="panel-title">Recent Estimates</span>
+          <span class="panel-title">Recent Assessments</span>
           {% if config.SHOW_ADMIN %}
           <a class="panel-link" href="{{ url_for('main.admin') }}">View all</a>
           {% endif %}
         </div>
         <div class="table-wrap">
-          <table class="data-table" aria-live="polite">
+          <table class="data-table" aria-live="polite" aria-label="Recent operational assessments">
             <thead>
               <tr>
-                <th>Service</th>
-                <th>Region</th>
-                <th>Cost</th>
+                <th>Zone</th>
+                <th>Venue</th>
+                <th>Est. Cost</th>
                 <th></th>
               </tr>
             </thead>
@@ -278,15 +397,15 @@
               {% if history %}
                 {% for item in history %}
                 <tr>
-                  <td>{{ item.service_name }}</td>
-                  <td>{{ item.region }}</td>
+                  <td>{{ zone_aliases.get(item.service_name, item.service_name) }}</td>
+                  <td>{{ venue_aliases.get(item.region, item.region) }}</td>
                   <td>&#8377; {{ "%.2f"|format(item.predicted_cost) }}</td>
-                  <td><button class="del-btn" data-id="{{ item.id }}" type="button">Remove</button></td>
+                  <td><button class="del-btn" data-id="{{ item.id }}" type="button" aria-label="Remove assessment {{ item.id }}">Remove</button></td>
                 </tr>
                 {% endfor %}
               {% else %}
               <tr id="empty-row">
-                <td colspan="4" style="color:var(--text-3); font-size:0.8rem; padding: 16px 12px;">No estimates yet.</td>
+                <td colspan="4" style="color:var(--text-3); font-size:0.8rem; padding: 16px 12px;">No assessments yet. Run your first operational analysis above.</td>
               </tr>
               {% endif %}
             </tbody>
@@ -296,6 +415,17 @@
 
     </div><!-- /right-col -->
   </div><!-- /workspace -->
+
+  <!-- ── Footer ── -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <span class="footer-brand">StadiumIQ</span>
+      <span class="footer-sep">·</span>
+      <span class="footer-text">FIFA World Cup 2026 Smart Stadium Operations Platform</span>
+      <span class="footer-sep">·</span>
+      <span class="footer-text">Powered by ML + Gemini AI</span>
+    </div>
+  </footer>
 
 </div><!-- /page -->
 

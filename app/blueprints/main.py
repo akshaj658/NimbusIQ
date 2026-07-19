@@ -7,6 +7,7 @@ import joblib
 from flask import Blueprint, Response, flash, redirect, render_template, request, url_for, current_app
 
 from src.utils.config import MODEL_DIR
+from app.ai_assistant import ZONE_ALIASES, VENUE_ALIASES, get_ai_recommendations, get_stadium_status
 
 from app.services import (
     delete_prediction,
@@ -46,7 +47,7 @@ def require_basic_auth(func):
             return func(*args, **kwargs)
         # Request auth
         resp = Response("Unauthorized", status=401)
-        resp.headers["WWW-Authenticate"] = 'Basic realm="NimbusIQ Admin"'
+        resp.headers["WWW-Authenticate"] = 'Basic realm="StadiumIQ Admin"'
         return resp
     return wrapper
 
@@ -72,75 +73,86 @@ def _get_form_options() -> dict[str, list[str]]:
         return {"service_names": [], "usage_units": [], "regions": []}
 
 
+def _template_context(options: dict) -> dict:
+    """Build the shared template context with stadium aliasing."""
+    return {
+        "service_names": options["service_names"],
+        "usage_units": options["usage_units"],
+        "regions": options["regions"],
+        "zone_aliases": ZONE_ALIASES,
+        "venue_aliases": VENUE_ALIASES,
+    }
+
+
 @main_bp.route("/")
 def index():
     history = get_prediction_history(limit=5)
     options = _get_form_options()
+    ctx = _template_context(options)
     return render_template(
         "index.html",
         history=history,
         prediction_result=None,
         cost_breakdown=None,
+        ai_result=None,
         values={},
         errors=[],
-        service_names=options["service_names"],
-        usage_units=options["usage_units"],
-        regions=options["regions"],
+        **ctx,
     )
 
 
 @main_bp.route("/predict", methods=["POST"])
 def predict():
     errors, values = sanitize_form_data(request.form)
+    options = _get_form_options()
+    ctx = _template_context(options)
+
     if errors:
         for error in errors:
             flash(error, "danger")
         history = get_prediction_history(limit=5)
-        options = _get_form_options()
         return render_template(
             "index.html",
             history=history,
             prediction_result=None,
             cost_breakdown=None,
+            ai_result=None,
             values=values,
             errors=errors,
-            service_names=options["service_names"],
-            usage_units=options["usage_units"],
-            regions=options["regions"],
+            **ctx,
         )
 
     try:
         predicted_cost, breakdown = perform_prediction(values)
-        flash("Prediction completed successfully.", "success")
+        flash("Operational assessment complete.", "success")
         history = get_prediction_history(limit=5)
-        options = _get_form_options()
+
+        # Generate AI recommendations in the same request (fast enough for sync)
+        ai_result = get_ai_recommendations(values, predicted_cost)
+
         return render_template(
             "index.html",
             history=history,
             prediction_result=predicted_cost,
             cost_breakdown=breakdown,
+            ai_result=ai_result,
             values=values,
             errors=[],
-            service_names=options["service_names"],
-            usage_units=options["usage_units"],
-            regions=options["regions"],
+            **ctx,
         )
     except Exception as exc:
-        flash(f"Prediction failed: {exc}", "danger")
+        flash(f"Assessment failed: {exc}", "danger")
         history = get_prediction_history(limit=5)
-        options = _get_form_options()
         return render_template(
             "index.html",
             history=history,
             prediction_result=None,
             cost_breakdown=None,
+            ai_result=None,
             values=values,
             errors=[str(exc)],
-            service_names=options["service_names"],
-            usage_units=options["usage_units"],
-            regions=options["regions"],
+            **ctx,
         )
-
 
 
 @main_bp.route("/history")
@@ -157,20 +169,49 @@ def api_form_options():
     return options
 
 
+@main_bp.route("/api/ai-assist", methods=["POST"])
+def api_ai_assist():
+    """
+    GenAI endpoint: accepts sanitised form values + predicted cost,
+    returns AI-powered stadium operations recommendations from Gemini.
+    """
+    try:
+        payload = request.get_json(force=True, silent=True) or {}
+        values = payload.get("values", {})
+        predicted_cost = float(payload.get("predicted_cost", 0.0))
+        result = get_ai_recommendations(values, predicted_cost)
+        return result, 200
+    except Exception as exc:
+        return {"error": str(exc), "recommendations": [], "source": "error"}, 500
+
+
+@main_bp.route("/api/stadium-status")
+def api_stadium_status():
+    """Return simulated live stadium status metrics for the command dashboard."""
+    return get_stadium_status(), 200
+
+
 @main_bp.route("/admin")
 @require_basic_auth
 def admin():
     search = request.args.get("q", "", type=str)
     stats = get_dashboard_stats(search=search)
     history_rows = get_prediction_history(search=search)
-    return render_template("admin.html", stats=stats, history=history_rows, search=search)
+    return render_template(
+        "admin.html",
+        stats=stats,
+        history=history_rows,
+        search=search,
+        zone_aliases=ZONE_ALIASES,
+        venue_aliases=VENUE_ALIASES,
+    )
 
 
 @main_bp.route("/admin/delete/<int:prediction_id>", methods=["POST"])
 @require_basic_auth
 def delete_prediction_route(prediction_id: int):
     delete_prediction(prediction_id)
-    flash("Prediction deleted successfully.", "success")
+    flash("Record removed successfully.", "success")
     return redirect(url_for("main.admin"))
 
 
@@ -191,7 +232,7 @@ def download():
     rows = get_prediction_history(search=search)
     content = generate_csv(rows)
     response = Response(content, mimetype="text/csv")
-    response.headers["Content-Disposition"] = "attachment; filename=nimbusiq_predictions.csv"
+    response.headers["Content-Disposition"] = "attachment; filename=stadiumiq_operations.csv"
     return response
 
 
