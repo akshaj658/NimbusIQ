@@ -468,9 +468,18 @@ def _call_gemini(api_key: str, system_prompt: str, user_message: str) -> str:
         return response.text.strip()
 
 
-def query_ai_console(domain_id: str, situation: str, context: dict | None = None) -> dict[str, Any]:
-    """
-    Query the AI console for domain-specific stadium operations guidance.
+def _get_fallback_response(domain_id: str, domain_title: str) -> dict[str, Any]:
+    """Generates the structured fallback guidance payload for a given domain."""
+    fallback = _DOMAIN_FALLBACKS.get(domain_id, _DOMAIN_FALLBACKS["ai_recommendations"])
+    return {
+        "response": "\n\n".join(fallback),
+        "domain_title": domain_title,
+        "source": "fallback",
+    }
+
+
+def query_ai_console(domain_id: str, situation: str, context: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Query the AI console for domain-specific stadium operations guidance.
 
     Args:
         domain_id:  One of the 13 operational domain IDs.
@@ -479,10 +488,7 @@ def query_ai_console(domain_id: str, situation: str, context: dict | None = None
                     (venue, crowd_size, time_to_kickoff, etc.)
 
     Returns:
-        dict with:
-            "response":      str  — full AI-generated guidance text
-            "domain_title":  str  — human-readable domain name
-            "source":        str  — "gemini" | "fallback"
+        dict with guidance details.
     """
     domain = DOMAIN_BY_ID.get(domain_id, DOMAIN_BY_ID["ai_recommendations"])
     api_key = os.environ.get("GEMINI_API_KEY", "").strip()
@@ -496,12 +502,7 @@ def query_ai_console(domain_id: str, situation: str, context: dict | None = None
         full_situation = situation
 
     if not api_key:
-        fallback = _DOMAIN_FALLBACKS.get(domain_id, _DOMAIN_FALLBACKS["ai_recommendations"])
-        return {
-            "response": "\n\n".join(fallback),
-            "domain_title": domain["title"],
-            "source": "fallback",
-        }
+        return _get_fallback_response(domain_id, domain["title"])
 
     try:
         system_prompt = _DOMAIN_SYSTEM_PROMPTS.get(domain_id, _DOMAIN_SYSTEM_PROMPTS["ai_recommendations"])
@@ -513,12 +514,7 @@ def query_ai_console(domain_id: str, situation: str, context: dict | None = None
         }
     except Exception as exc:
         logger.warning("Gemini AI query failed (%s) — using fallback.", exc)
-        fallback = _DOMAIN_FALLBACKS.get(domain_id, _DOMAIN_FALLBACKS["ai_recommendations"])
-        return {
-            "response": "\n\n".join(fallback),
-            "domain_title": domain["title"],
-            "source": "fallback",
-        }
+        return _get_fallback_response(domain_id, domain["title"])
 
 
 def _build_gemini_prompt(values: dict[str, Any], predicted_cost: float) -> str:

@@ -1,6 +1,13 @@
+"""
+src/data/preprocessing.py
+=========================
+Validates, cleans, and pre-processes raw datasets for model training or predictions.
+"""
+from __future__ import annotations
+
 import pandas as pd
 
-REQUIRED_COLUMNS = [
+REQUIRED_COLUMNS: list[str] = [
     "Resource ID",
     "Service Name",
     "Usage Quantity",
@@ -18,7 +25,7 @@ REQUIRED_COLUMNS = [
     "Total Cost (INR)",
 ]
 
-NUMERIC_COLUMNS = [
+NUMERIC_COLUMNS: list[str] = [
     "Usage Quantity",
     "CPU Utilization (%)",
     "Memory Utilization (%)",
@@ -30,27 +37,36 @@ NUMERIC_COLUMNS = [
     "Total Cost (INR)",
 ]
 
-CATEGORICAL_COLUMNS = ["Service Name", "Usage Unit", "Region/Zone"]
+CATEGORICAL_COLUMNS: list[str] = ["Service Name", "Usage Unit", "Region/Zone"]
 
 
-def preprocess_dataset(df: pd.DataFrame) -> pd.DataFrame:
-    """Validate and preprocess the cloud cost dataset."""
+def preprocess_dataset(df: pd.DataFrame | None) -> pd.DataFrame:
+    """Validates and pre-processes input DataFrames for features engineering or model consumption.
+
+    Args:
+        df: The pandas DataFrame representing the dataset.
+
+    Returns:
+        The preprocessed and validated pandas DataFrame.
+
+    Raises:
+        ValueError: If dataset is None, missing required columns, has invalid dates,
+                    or non-numeric data types where numeric are required.
+    """
     if df is None:
         raise ValueError("Dataset cannot be None.")
 
-    dataset = df.copy()
-    missing_columns = [column for column in REQUIRED_COLUMNS if column not in dataset.columns]
+    dataset: pd.DataFrame = df.copy()
+    missing_columns: list[str] = [col for col in REQUIRED_COLUMNS if col not in dataset.columns]
 
     if missing_columns:
         raise ValueError(f"Missing required columns: {', '.join(missing_columns)}")
 
-    for column in dataset.select_dtypes(include=["object", "string"]).columns:
+    # Standardize string fields by stripping whitespace
+    for column in dataset.select_dtypes(include=["object", "string", "category"]).columns:
         dataset[column] = dataset[column].astype(str).str.strip()
 
-    for column in CATEGORICAL_COLUMNS:
-        if column in dataset.columns:
-            dataset[column] = dataset[column].astype(str).str.strip()
-
+    # Parse date columns
     try:
         dataset["Usage Start Date"] = pd.to_datetime(dataset["Usage Start Date"], errors="coerce", format="mixed")
         dataset["Usage End Date"] = pd.to_datetime(dataset["Usage End Date"], errors="coerce", format="mixed")
@@ -60,6 +76,7 @@ def preprocess_dataset(df: pd.DataFrame) -> pd.DataFrame:
     if dataset[["Usage Start Date", "Usage End Date"]].isna().any().any():
         raise ValueError("Invalid or missing Usage Start Date / Usage End Date values.")
 
+    # Cast numeric columns strictly
     for column in NUMERIC_COLUMNS:
         dataset[column] = pd.to_numeric(dataset[column], errors="raise")
 

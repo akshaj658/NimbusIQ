@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 import json
 import os
 import hmac
 from functools import wraps, lru_cache
 from base64 import b64decode
+from typing import Any
 
 import joblib
 from flask import Blueprint, Response, flash, redirect, render_template, request, url_for, current_app
@@ -75,7 +78,7 @@ def _get_form_options() -> dict[str, list[str]]:
         return {"service_names": [], "usage_units": [], "regions": []}
 
 
-def _template_context(options: dict) -> dict:
+def _template_context(options: dict[str, list[str]]) -> dict[str, Any]:
     """Shared template context with stadium aliasing."""
     return {
         "service_names": options["service_names"],
@@ -88,73 +91,61 @@ def _template_context(options: dict) -> dict:
     }
 
 
+def _render_index(
+    values: dict[str, Any],
+    errors: list[str],
+    prediction_result: float | None = None,
+    cost_breakdown: dict[str, Any] | None = None,
+    ai_result: dict[str, Any] | None = None,
+) -> str:
+    """Helper to render the homepage with current assessment context."""
+    options = _get_form_options()
+    ctx = _template_context(options)
+    history = get_prediction_history(limit=5)
+    return render_template(
+        "index.html",
+        history=history,
+        prediction_result=prediction_result,
+        cost_breakdown=cost_breakdown,
+        ai_result=ai_result,
+        values=values,
+        errors=errors,
+        **ctx,
+    )
+
+
 # ── Core routes ──────────────────────────────────────────────────────────────
 
 @main_bp.route("/")
 def index():
-    history = get_prediction_history(limit=5)
-    options = _get_form_options()
-    ctx = _template_context(options)
-    return render_template(
-        "index.html",
-        history=history,
-        prediction_result=None,
-        cost_breakdown=None,
-        ai_result=None,
-        values={},
-        errors=[],
-        **ctx,
-    )
+    return _render_index(values={}, errors=[])
 
 
 @main_bp.route("/predict", methods=["POST"])
 def predict():
     errors, values = sanitize_form_data(request.form)
-    options = _get_form_options()
-    ctx = _template_context(options)
 
     if errors:
         for error in errors:
             flash(error, "danger")
-        history = get_prediction_history(limit=5)
-        return render_template(
-            "index.html",
-            history=history,
-            prediction_result=None,
-            cost_breakdown=None,
-            ai_result=None,
-            values=values,
-            errors=errors,
-            **ctx,
-        )
+        return _render_index(values=values, errors=errors)
 
     try:
         predicted_cost, breakdown = perform_prediction(values)
         flash("Operational assessment complete.", "success")
-        history = get_prediction_history(limit=5)
         ai_result = get_ai_recommendations(values, predicted_cost)
-        return render_template(
-            "index.html",
-            history=history,
+        return _render_index(
+            values=values,
+            errors=[],
             prediction_result=predicted_cost,
             cost_breakdown=breakdown,
             ai_result=ai_result,
-            values=values,
-            errors=[],
-            **ctx,
         )
     except Exception as exc:
         flash(f"Assessment failed: {exc}", "danger")
-        history = get_prediction_history(limit=5)
-        return render_template(
-            "index.html",
-            history=history,
-            prediction_result=None,
-            cost_breakdown=None,
-            ai_result=None,
+        return _render_index(
             values=values,
             errors=[str(exc)],
-            **ctx,
         )
 
 

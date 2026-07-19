@@ -1,30 +1,47 @@
+"""
+app/database.py
+===============
+Manages database path resolution, initialization, and connection pooling for StadiumIQ history logs.
+"""
+from __future__ import annotations
+
 import os
 import sqlite3
 from pathlib import Path
-
-from src.utils.config import DEFAULT_DATABASE_PATH
+from src.utils.config import DEFAULT_DATABASE_PATH, PROJECT_ROOT
 
 
 def get_database_path() -> Path:
-    configured_path = os.environ.get("DATABASE_PATH")
+    """Resolves and returns the database absolute file path from environment or defaults.
+
+    Returns:
+        The absolute Path to the SQLite database file.
+    """
+    configured_path: str | None = os.environ.get("DATABASE_PATH")
     if configured_path:
-        path = Path(configured_path).expanduser()
+        path: Path = Path(configured_path).expanduser()
         if not path.is_absolute():
-            path = (Path.cwd() / path).resolve()
+            path = (PROJECT_ROOT / path).resolve()
         return path
     return DEFAULT_DATABASE_PATH
 
 
 def get_db_connection() -> sqlite3.Connection:
-    database_path = get_database_path()
+    """Establishes and returns a connection to the SQLite database.
+
+    Returns:
+        A sqlite3.Connection with Row row_factory configured.
+    """
+    database_path: Path = get_database_path()
     database_path.parent.mkdir(parents=True, exist_ok=True)
-    connection = sqlite3.connect(database_path)
+    connection: sqlite3.Connection = sqlite3.connect(database_path)
     connection.row_factory = sqlite3.Row
     return connection
 
 
 def initialize_database() -> None:
-    connection = get_db_connection()
+    """Initializes the database schema and structures if the table does not exist."""
+    connection: sqlite3.Connection = get_db_connection()
     connection.execute(
         """
         CREATE TABLE IF NOT EXISTS prediction_history (

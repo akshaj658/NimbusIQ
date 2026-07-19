@@ -1,5 +1,6 @@
 """
 app/pricing.py — StadiumIQ Post-Model Operational Cost Calibration Engine
+========================================================================
 
 Applies deterministic business rules on top of the raw ML model output to
 produce accurate stadium operational cost estimates for FIFA World Cup 2026.
@@ -18,6 +19,20 @@ from __future__ import annotations
 import math
 import os
 from typing import Any
+
+# ---------------------------------------------------------------------------
+# Business Calibration Constants
+# ---------------------------------------------------------------------------
+HIGH_EGRESS_THRESHOLD_GB: float = 100.0
+EGRESS_PENALTY_SCALE: float = 0.10
+
+WORKLOAD_CPU_THRESHOLD: float = 60.0
+WORKLOAD_MEM_THRESHOLD: float = 60.0
+WORKLOAD_SURCHARGE_SCALE: float = 0.225
+
+MAX_ML_COEFFICIENT: float = 5.0
+DEFAULT_USD_TO_INR_RATE: float = 84.0
+_DEFAULT_REGIONAL_MULTIPLIER: float = 1.05
 
 # ---------------------------------------------------------------------------
 # Venue-based calibration multipliers (relative to US-central1 baseline = 1.00)
@@ -72,20 +87,6 @@ REGIONAL_MULTIPLIERS: dict[str, float] = {
     "africa-south1":            1.220,
 }
 
-# Fallback for any region not in the map above (conservative premium)
-_DEFAULT_REGIONAL_MULTIPLIER: float = 1.05
-
-# ---------------------------------------------------------------------------
-# Thresholds
-# ---------------------------------------------------------------------------
-HIGH_EGRESS_THRESHOLD_GB:    float = 100.0  # 100 GB
-WORKLOAD_CPU_THRESHOLD:      float = 60.0   # percent
-WORKLOAD_MEM_THRESHOLD:      float = 60.0   # percent
-
-
-# ---------------------------------------------------------------------------
-# Individual multiplier functions (each independently testable)
-# ---------------------------------------------------------------------------
 
 def get_regional_multiplier(region: str) -> float:
     """Return the price premium multiplier for a given GCP region/zone.
@@ -109,7 +110,7 @@ def compute_egress_penalty(network_out_gb: float) -> float:
     if network_out_gb <= HIGH_EGRESS_THRESHOLD_GB:
         return 1.0
     ratio = network_out_gb / HIGH_EGRESS_THRESHOLD_GB
-    return 1.0 + 0.10 * math.log10(ratio)
+    return 1.0 + EGRESS_PENALTY_SCALE * math.log10(ratio)
 
 
 def compute_workload_density_multiplier(cpu: float, memory: float) -> float:
@@ -125,12 +126,8 @@ def compute_workload_density_multiplier(cpu: float, memory: float) -> float:
         return 1.0
     cpu_excess = (cpu - WORKLOAD_CPU_THRESHOLD) / (100.0 - WORKLOAD_CPU_THRESHOLD)
     mem_excess = (memory - WORKLOAD_MEM_THRESHOLD) / (100.0 - WORKLOAD_MEM_THRESHOLD)
-    return 1.0 + 0.225 * cpu_excess * mem_excess
+    return 1.0 + WORKLOAD_SURCHARGE_SCALE * cpu_excess * mem_excess
 
-
-# ---------------------------------------------------------------------------
-# Main entry point
-# ---------------------------------------------------------------------------
 
 def apply_business_adjustments(raw_model_cost: float, values: dict[str, Any]) -> dict[str, Any]:
     """Apply all post-model business rules and return a full cost breakdown.
@@ -151,40 +148,35 @@ def apply_business_adjustments(raw_model_cost: float, values: dict[str, Any]) ->
             "final_cost_inr":       float,  # the number shown to the user
         }
     """
-    USD_TO_INR_RATE = float(os.environ.get("USD_TO_INR_RATE", "84.0"))
+    usd_to_inr_rate = float(os.environ.get("USD_TO_INR_RATE", str(DEFAULT_USD_TO_INR_RATE)))
 
     # 1. Deterministic linear baseline in proper currency
     try:
-        usage_qty  = float(values.get("usage_quantity",   0) or 0)
+        usage_qty = float(values.get("usage_quantity", 0) or 0)
         cost_per_q = float(values.get("cost_per_quantity", 0) or 0)
         baseline_usd = usage_qty * cost_per_q
-        baseline_inr = baseline_usd * USD_TO_INR_RATE
+        baseline_inr = baseline_usd * usd_to_inr_rate
     except (TypeError, ValueError):
         baseline_inr = 0.0
 
     # 2. Derive the ML Coefficient (Dimensionless)
-    # This prevents adding raw currency to a baseline, treating the model instead
-    # as a complexity multiplier over the baseline.
-    MAX_ML_COEFFICIENT = 5.0  # Hard logical boundary to prevent extreme outliers
-
     if baseline_inr > 0:
-        # Calculate raw coefficient and cap it using min() to prevent unbounded predictions
+        # Calculate raw coefficient and cap it to prevent unbounded predictions
         raw_coefficient = raw_model_cost / baseline_inr
         ml_coefficient = min(raw_coefficient, MAX_ML_COEFFICIENT)
     else:
         # FREE TIER HANDLING
-        # If the user's rate is $0, the baseline is 0. The ML model shouldn't invent a cost.
         ml_coefficient = 0.0
         baseline_inr = 0.0
 
     # 3. Individual multipliers
-    region      = str(values.get("region", "") or "")
-    network_out = float(values.get("network_out", 0) or 0) # Now in GB
-    cpu         = float(values.get("cpu",     0) or 0)
-    memory      = float(values.get("memory",  0) or 0)
+    region = str(values.get("region", "") or "")
+    network_out = float(values.get("network_out", 0) or 0)
+    cpu = float(values.get("cpu", 0) or 0)
+    memory = float(values.get("memory", 0) or 0)
 
     regional_mult = get_regional_multiplier(region)
-    egress_mult   = compute_egress_penalty(network_out)
+    egress_mult = compute_egress_penalty(network_out)
     workload_mult = compute_workload_density_multiplier(cpu, memory)
 
     total_multiplier = regional_mult * egress_mult * workload_mult
