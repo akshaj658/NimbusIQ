@@ -18,6 +18,8 @@ venv/
 
 # === Database ===
 cloudcostai.db
+stadiumiq.db
+*.db
 
 # === Pytest ===
 .pytest_cache/

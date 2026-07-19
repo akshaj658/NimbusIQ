@@ -1,11 +1,11 @@
 /**
- * StadiumIQ — FIFA World Cup 2026 Operations Intelligence
+ * StadiumIQ - FIFA World Cup 2026 Operations Intelligence
  * UI Controller: theme, tabs, sliders, form, admin, live-status polling
  */
 (function () {
   'use strict';
 
-  // ── Theme ──────────────────────────────────────────────────────────────────
+  // -- Theme ------------------------------------------------------------------
 
   const THEME_KEY = 'stadiumiq-theme';
 
@@ -29,7 +29,7 @@
     });
   }
 
-  // ── Tabbed form ────────────────────────────────────────────────────────────
+  // -- Tabbed form ------------------------------------------------------------
 
   let currentTab = 0;
   const tabIds = ['tab-service', 'tab-infra', 'tab-timeline', 'tab-pricing'];
@@ -42,7 +42,7 @@
     index = Math.max(0, Math.min(index, tabIds.length - 1));
     currentTab = index;
 
-    btns.forEach((b, i)   => {
+    btns.forEach((b, i) => {
       b.classList.toggle('active', i === index);
       b.setAttribute('aria-selected', i === index ? 'true' : 'false');
     });
@@ -58,12 +58,12 @@
     document.querySelectorAll('.tab-btn').forEach(function (btn, i) {
       btn.addEventListener('click', function () { showTab(i); });
     });
+    document.getElementById('tab-prev')?.addEventListener('click', function () { showTab(currentTab - 1); });
+    document.getElementById('tab-next')?.addEventListener('click', function () { showTab(currentTab + 1); });
     showTab(0);
   }
 
-  window.stepTab = function (delta) { showTab(currentTab + delta); };
-
-  // ── Sliders ────────────────────────────────────────────────────────────────
+  // -- Sliders ----------------------------------------------------------------
 
   function initSlider(sliderId, valId) {
     const slider = document.getElementById(sliderId);
@@ -74,7 +74,7 @@
     ['input', 'change'].forEach(e => slider.addEventListener(e, sync));
   }
 
-  // ── Form submit state ──────────────────────────────────────────────────────
+  // -- Form submit state ------------------------------------------------------
 
   function initForm() {
     const form = document.getElementById('prediction-form');
@@ -87,17 +87,21 @@
       if (label)   label.textContent = 'Analysing...';
       if (spinner) spinner.classList.remove('d-none');
     });
+
+    document.getElementById('clear-form-btn')?.addEventListener('click', resetEstimateForm);
   }
 
-  window.resetEstimateForm = function () {
-    const form = document.getElementById('prediction-form');
-    if (form) form.reset();
-    document.getElementById('cpu-val') && (document.getElementById('cpu-val').textContent = '50%');
-    document.getElementById('mem-val') && (document.getElementById('mem-val').textContent = '50%');
+  function resetEstimateForm() {
+    const form   = document.getElementById('prediction-form');
+    const cpuVal = document.getElementById('cpu-val');
+    const memVal = document.getElementById('mem-val');
+    if (form)   form.reset();
+    if (cpuVal) cpuVal.textContent = '50%';
+    if (memVal) memVal.textContent = '50%';
     showTab(0);
-  };
+  }
 
-  // ── Delete handlers ────────────────────────────────────────────────────────
+  // -- Delete handlers --------------------------------------------------------
 
   function initDeleteHandlers() {
     document.addEventListener('click', async function (e) {
@@ -107,9 +111,14 @@
 
       e.target.setAttribute('disabled', 'true');
       try {
-        const res = await fetch('/api/delete/' + id, { method: 'DELETE' });
+        const res = await fetch('/api/delete/' + id, {
+          method: 'DELETE',
+          credentials: 'include',
+        });
         if (res.ok) {
           e.target.closest('tr')?.remove();
+        } else if (res.status === 401) {
+          alert('Authentication required. Please log in to the admin dashboard first.');
         } else {
           const d = await res.json().catch(() => ({}));
           alert('Could not remove: ' + (d.message || res.statusText));
@@ -122,7 +131,7 @@
     });
   }
 
-  // ── Admin search ───────────────────────────────────────────────────────────
+  // -- Admin search -----------------------------------------------------------
 
   function formatINR(v) {
     try {
@@ -154,7 +163,9 @@
   async function doSearch(q) {
     q = q !== undefined ? q : (document.getElementById('search-input')?.value || '');
     try {
-      const res = await fetch('/history?q=' + encodeURIComponent(q));
+      const res = await fetch('/history?q=' + encodeURIComponent(q), {
+        credentials: 'include',
+      });
       if (res.ok) renderTable((await res.json()).predictions || []);
     } catch (_) {}
   }
@@ -166,17 +177,11 @@
     });
     document.getElementById('export-btn')?.addEventListener('click', function () {
       const q = document.getElementById('search-input')?.value || '';
-      const a = Object.assign(document.createElement('a'), {
-        href: '/download?q=' + encodeURIComponent(q),
-        download: 'stadiumiq_operations.csv'
-      });
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
+      window.location.href = '/download?q=' + encodeURIComponent(q);
     });
   }
 
-  // ── Live stadium status polling ────────────────────────────────────────────
+  // -- Live stadium status polling --------------------------------------------
 
   function renderStatusBar(data) {
     const venuesEl = document.getElementById('status-venues');
@@ -205,9 +210,9 @@
     setInterval(fetchStadiumStatus, 30_000);
   }
 
-  // ── Boot ───────────────────────────────────────────────────────────────────
+  // -- Boot -------------------------------------------------------------------
 
-  document.addEventListener('DOMContentLoaded', function () {
+  function boot() {
     initTheme();
     initTabs();
     initSlider('cpu-slider', 'cpu-val');
@@ -216,6 +221,12 @@
     initDeleteHandlers();
     initAdmin();
     initStatusBar();
-  });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
 
 }());

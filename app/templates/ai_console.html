@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>StadiumIQ — AI Incident Console | FIFA World Cup 2026</title>
+  <title>StadiumIQ - AI Incident Console | FIFA World Cup 2026</title>
   <meta name="description" content="Real-time AI-powered incident guidance for FIFA World Cup 2026 stadium operations teams.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,7 +13,7 @@
 <body>
 <div class="page">
 
-  <!-- ── Topbar ── -->
+  <!-- -- Topbar -- -->
   <header class="topbar">
     <a class="topbar-left" href="{{ url_for('main.index') }}">
       <span class="logo-icon">
@@ -31,17 +31,17 @@
     </nav>
   </header>
 
-  <!-- ── Status Bar ── -->
+  <!-- -- Status Bar -- -->
   <div class="status-bar" id="status-bar" aria-live="polite">
     <span class="status-bar-label">WORLD CUP 2026</span>
     <div class="status-bar-venues" id="status-venues">
-      <span class="status-chip ok">AI Console — Ready</span>
-      <span class="status-chip ok">Gemini AI — {{ 'Connected' if gemini_available else 'Fallback Mode' }}</span>
+      <span class="status-chip ok">AI Console - Ready</span>
+      <span class="status-chip ok">Gemini AI - {{ 'Connected' if gemini_available else 'Fallback Mode' }}</span>
     </div>
     <span class="status-bar-right" id="status-global">AI DIRECTOR ONLINE</span>
   </div>
 
-  <!-- ── Console Body ── -->
+  <!-- -- Console Body -- -->
   <div class="console-wrap">
 
     <!-- Left: Domain selector + context form -->
@@ -92,8 +92,8 @@
             <select id="ctx-severity">
               <option value="routine">Routine / Planning</option>
               <option value="elevated">Elevated / Monitoring</option>
-              <option value="urgent">Urgent — Action Required</option>
-              <option value="critical">Critical — Immediate Response</option>
+              <option value="urgent">Urgent - Action Required</option>
+              <option value="critical">Critical - Immediate Response</option>
             </select>
           </div>
         </div>
@@ -223,7 +223,7 @@
     <div class="footer-inner">
       <span class="footer-brand">StadiumIQ</span>
       <span class="footer-sep">·</span>
-      <span class="footer-text">AI Incident Console — Powered by Gemini AI</span>
+      <span class="footer-text">AI Incident Console - Powered by Gemini AI</span>
       <span class="footer-sep">·</span>
       <span class="footer-text">FIFA World Cup 2026</span>
     </div>
@@ -231,11 +231,8 @@
 
 </div><!-- /page -->
 
-<script>
-  // Domain data injected server-side for JS
-  window.STADIUMIQ_DOMAINS = {{ domains_json | safe }};
-</script>
-<script src="{{ url_for('static', filename='js/main.js') }}"></script>
-<script src="{{ url_for('static', filename='js/console.js') }}"></script>
+<script type="application/json" id="stadiumiq-domains-data">{{ domains_json | safe }}</script>
+<script src="{{ url_for('static', filename='js/main.js') }}?v=1.0.6"></script>
+<script src="{{ url_for('static', filename='js/console.js') }}?v=1.0.6"></script>
 </body>
 </html>

@@ -1,13 +1,19 @@
 /**
- * StadiumIQ — Match-Day Readiness Controller
+ * StadiumIQ - Match-Day Readiness Controller
  * Handles domain status selection, notes, AI report generation.
  */
 (function () {
   'use strict';
 
-  const domains = window.STADIUMIQ_DOMAINS || [];
+  const domainsEl = document.getElementById('stadiumiq-domains-data');
+  let domains = [];
+  if (domainsEl) {
+    try {
+      domains = JSON.parse(domainsEl.textContent);
+    } catch (_) {}
+  }
 
-  // ── Mark all green ────────────────────────────────────────────────────────
+  // -- Mark all green --------------------------------------------------------
 
   document.getElementById('all-green-btn')?.addEventListener('click', function () {
     document.querySelectorAll('.readiness-status-select').forEach(function (sel) {
@@ -15,7 +21,7 @@
     });
   });
 
-  // ── Generate AI report ────────────────────────────────────────────────────
+  // -- Generate AI report ----------------------------------------------------
 
   document.getElementById('generate-report-btn')?.addEventListener('click', async function () {
     const btn = this;
@@ -101,13 +107,13 @@
     let verdictClass, verdictText;
     if (redCount > 0) {
       verdictClass = 'verdict-hold';
-      verdictText  = '🔴 HOLD — ' + redCount + ' critical domain(s) not ready';
+      verdictText  = '🔴 HOLD - ' + redCount + ' critical domain(s) not ready';
     } else if (amberCount > 0) {
       verdictClass = 'verdict-conditional';
-      verdictText  = '🟡 CONDITIONAL GO — ' + amberCount + ' domain(s) need resolution';
+      verdictText  = '🟡 CONDITIONAL GO - ' + amberCount + ' domain(s) need resolution';
     } else {
       verdictClass = 'verdict-go';
-      verdictText  = '🟢 GO — All domains ready';
+      verdictText  = '🟢 GO - All domains ready';
     }
 
     if (verdictEl) {

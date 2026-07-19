@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>StadiumIQ — Operations Command Hub | FIFA World Cup 2026</title>
-  <meta name="description" content="FIFA World Cup 2026 Operations Command Hub — 13 real-time operational domains managed by AI.">
+  <title>StadiumIQ - Operations Command Hub | FIFA World Cup 2026</title>
+  <meta name="description" content="FIFA World Cup 2026 Operations Command Hub - 13 real-time operational domains managed by AI.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -13,7 +13,7 @@
 <body>
 <div class="page">
 
-  <!-- ── Topbar ── -->
+  <!-- -- Topbar -- -->
   <header class="topbar">
     <a class="topbar-left" href="{{ url_for('main.index') }}">
       <span class="logo-icon">
@@ -31,18 +31,18 @@
     </nav>
   </header>
 
-  <!-- ── Status Bar ── -->
+  <!-- -- Status Bar -- -->
   <div class="status-bar" id="status-bar" aria-live="polite">
     <span class="status-bar-label">WORLD CUP 2026</span>
     <div class="status-bar-venues" id="status-venues">
       {% for v in status.venues %}
-      <span class="status-chip {{ v.alert_class }}">{{ v.venue }} — {{ v.capacity_pct }}%</span>
+      <span class="status-chip {{ v.alert_class }}">{{ v.venue }} - {{ v.capacity_pct }}%</span>
       {% endfor %}
     </div>
     <span class="status-bar-right" id="status-global">{{ status.global_alert }}</span>
   </div>
 
-  <!-- ── Ops Hub Body ── -->
+  <!-- -- Ops Hub Body -- -->
   <div class="ops-wrap">
 
     <!-- Hub Header -->
@@ -150,6 +150,6 @@
   </footer>
 
 </div><!-- /page -->
-<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}?v=1.0.6"></script>
 </body>
 </html>

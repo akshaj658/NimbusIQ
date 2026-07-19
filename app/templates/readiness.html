@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>StadiumIQ — Match-Day Readiness | FIFA World Cup 2026</title>
+  <title>StadiumIQ - Match-Day Readiness | FIFA World Cup 2026</title>
   <meta name="description" content="Pre-match readiness assessment across all 13 operational domains for FIFA World Cup 2026.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -30,14 +30,14 @@
     </nav>
   </header>
 
-  <div class="status-bar" id="status-bar" aria-live="polite">
+  <div class="status-bar" id="status-bar" aria-live="polite" aria-label="Live stadium status">
     <span class="status-bar-label">WORLD CUP 2026</span>
     <div class="status-bar-venues" id="status-venues">
       {% for v in status.venues %}
-      <span class="status-chip {{ v.alert_class }}">{{ v.venue }} — {{ v.capacity_pct }}%</span>
+      <span class="status-chip {{ v.alert_class }}">{{ v.venue }} - {{ v.capacity_pct }}%</span>
       {% endfor %}
     </div>
-    <span class="status-bar-right">{{ status.global_alert }}</span>
+    <span class="status-bar-right" id="status-global">{{ status.global_alert }}</span>
   </div>
 
   <div class="readiness-wrap">
@@ -103,9 +103,9 @@
           </div>
           <div class="readiness-domain-controls">
             <select class="readiness-status-select" data-domain="{{ domain.id }}" aria-label="{{ domain.title }} status">
-              <option value="green">🟢 Green — Ready</option>
-              <option value="amber" selected>🟡 Amber — Minor Issues</option>
-              <option value="red">🔴 Red — Not Ready</option>
+              <option value="green">🟢 Green - Ready</option>
+              <option value="amber" selected>🟡 Amber - Minor Issues</option>
+              <option value="red">🔴 Red - Not Ready</option>
             </select>
             <input type="text" class="readiness-notes" data-domain="{{ domain.id }}"
                    placeholder="Notes / issues..."
@@ -139,13 +139,12 @@
     <div class="footer-inner">
       <span class="footer-brand">StadiumIQ</span>
       <span class="footer-sep">·</span>
-      <span class="footer-text">Match-Day Readiness — FIFA World Cup 2026</span>
+      <span class="footer-text">Match-Day Readiness - FIFA World Cup 2026</span>
     </div>
   </footer>
 
-</div>
-<script>window.STADIUMIQ_DOMAINS = {{ domains_json | safe }};</script>
-<script src="{{ url_for('static', filename='js/main.js') }}"></script>
-<script src="{{ url_for('static', filename='js/readiness.js') }}"></script>
+<script type="application/json" id="stadiumiq-domains-data">{{ domains_json | safe }}</script>
+<script src="{{ url_for('static', filename='js/main.js') }}?v=1.0.6"></script>
+<script src="{{ url_for('static', filename='js/readiness.js') }}?v=1.0.6"></script>
 </body>
 </html>

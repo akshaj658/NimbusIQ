@@ -40,7 +40,7 @@ def create_app() -> Flask:
 
     app.config.update(
         SECRET_KEY=configured_secret,
-        DATABASE_PATH=os.environ.get("DATABASE_PATH", str(PROJECT_ROOT / "cloudcostai.db")),
+        DATABASE_PATH=os.environ.get("DATABASE_PATH", str(PROJECT_ROOT / "stadiumiq.db")),
         SHOW_ADMIN=os.environ.get("SHOW_ADMIN", "false").lower() in ("1", "true", "yes"),
         MAX_CONTENT_LENGTH=1_000_000,
         SESSION_COOKIE_HTTPONLY=True,
@@ -57,14 +57,15 @@ def create_app() -> Flask:
         response.headers.setdefault("X-Frame-Options", "DENY")
         response.headers.setdefault("Referrer-Policy", "no-referrer-when-downgrade")
         response.headers.setdefault("Permissions-Policy", "geolocation=()")
-        # Minimal CSP allowing same-origin scripts and styles; tighten as needed
+        # CSP: same-origin scripts/styles; cdn.jsdelivr.net for Chart.js on admin only
         response.headers.setdefault(
             "Content-Security-Policy",
             "default-src 'self'; "
-            "script-src 'self' https://cdn.jsdelivr.net https://unpkg.com; "
+            "script-src 'self' https://cdn.jsdelivr.net; "
             "style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
             "font-src https://fonts.gstatic.com; "
-            "img-src 'self' data:;"
+            "img-src 'self' data:; "
+            "connect-src 'self';"
         )
         return response
         

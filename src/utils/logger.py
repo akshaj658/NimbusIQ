@@ -19,7 +19,7 @@ def configure_logging() -> logging.Logger:
     Returns:
         The configured logging.Logger instance.
     """
-    app_logger = logging.getLogger("cloudcostai")
+    app_logger = logging.getLogger("stadiumiq")
     app_logger.setLevel(logging.INFO)
     app_logger.propagate = False
 

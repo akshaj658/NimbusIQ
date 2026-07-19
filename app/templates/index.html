@@ -3,8 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>StadiumIQ — FIFA World Cup 2026 Operations Intelligence</title>
-  <!-- app-compat: CloudCostAI -->
+  <title>StadiumIQ - FIFA World Cup 2026 Operations Intelligence</title>
   <meta name="description" content="AI-powered smart stadium command center for FIFA World Cup 2026. Real-time crowd management, emergency response, and operational cost intelligence.">
   <meta name="keywords" content="FIFA World Cup 2026, stadium operations, crowd management, smart stadium, AI operations">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,7 +14,7 @@
 <body>
 <div class="page">
 
-  <!-- ── Topbar ── -->
+  <!-- -- Topbar -- -->
   <header class="topbar">
     <a class="topbar-left" href="{{ url_for('main.index') }}">
       <span class="logo-icon">
@@ -46,19 +45,19 @@
     </nav>
   </header>
 
-  <!-- ── Live Status Bar ── -->
+  <!-- -- Live Status Bar -- -->
   <div class="status-bar" id="status-bar" aria-live="polite" aria-label="Live stadium status">
     <span class="status-bar-label">WORLD CUP 2026</span>
     <div class="status-bar-venues" id="status-venues">
-      <span class="status-chip ok">MetLife Stadium — 72% Capacity</span>
-      <span class="status-chip warn">AT&T Stadium — 91% Capacity</span>
-      <span class="status-chip ok">SoFi Stadium — 65% Capacity</span>
-      <span class="status-chip ok">Hard Rock Stadium — 78% Capacity</span>
+      <span class="status-chip ok">MetLife Stadium - 72% Capacity</span>
+      <span class="status-chip warn">AT&T Stadium - 91% Capacity</span>
+      <span class="status-chip ok">SoFi Stadium - 65% Capacity</span>
+      <span class="status-chip ok">Hard Rock Stadium - 78% Capacity</span>
     </div>
     <span class="status-bar-right" id="status-global">ALL SYSTEMS NOMINAL</span>
   </div>
 
-  <!-- ── Workspace ── -->
+  <!-- -- Workspace -- -->
   <div class="workspace">
 
     <!-- LEFT COLUMN -->
@@ -103,7 +102,7 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
             Operational Assessment
           </span>
-          <button class="btn btn-ghost btn-sm" type="button" onclick="resetEstimateForm()">Clear</button>
+          <button class="btn btn-ghost btn-sm" type="button" id="clear-form-btn">Clear</button>
         </div>
 
         <!-- Tab bar -->
@@ -251,8 +250,8 @@
 
           <div class="form-footer">
             <div class="tab-nav-btns">
-              <button type="button" class="btn btn-ghost btn-sm" id="tab-prev" onclick="stepTab(-1)" disabled>Previous</button>
-              <button type="button" class="btn btn-ghost btn-sm" id="tab-next" onclick="stepTab(1)">Next</button>
+              <button type="button" class="btn btn-ghost btn-sm" id="tab-prev" disabled>Previous</button>
+              <button type="button" class="btn btn-ghost btn-sm" id="tab-next">Next</button>
             </div>
             <button class="btn btn-primary" type="submit" id="submit-btn">
               <span class="btn-label">Run Assessment</span>
@@ -416,7 +415,7 @@
     </div><!-- /right-col -->
   </div><!-- /workspace -->
 
-  <!-- ── Footer ── -->
+  <!-- -- Footer -- -->
   <footer class="site-footer">
     <div class="footer-inner">
       <span class="footer-brand">StadiumIQ</span>
@@ -429,6 +428,6 @@
 
 </div><!-- /page -->
 
-<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}?v=1.0.6"></script>
 </body>
 </html>

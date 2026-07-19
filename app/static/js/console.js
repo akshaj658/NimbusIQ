@@ -1,18 +1,24 @@
 /**
- * StadiumIQ — AI Incident Console Controller
+ * StadiumIQ - AI Incident Console Controller
  * Handles domain selection, situation submission, Gemini AI response rendering,
  * session history management, and example auto-fill.
  */
 (function () {
   'use strict';
 
-  const domains = window.STADIUMIQ_DOMAINS || [];
+  const domainsEl = document.getElementById('stadiumiq-domains-data');
+  let domains = [];
+  if (domainsEl) {
+    try {
+      domains = JSON.parse(domainsEl.textContent);
+    } catch (_) {}
+  }
   const domainMap = {};
   domains.forEach(function (d) { domainMap[d.id] = d; });
 
   let sessionHistory = [];
 
-  // ── Element refs ──────────────────────────────────────────────────────────
+  // -- Element refs ----------------------------------------------------------
 
   const domainSelect    = document.getElementById('domain-select');
   const situationInput  = document.getElementById('situation-input');
@@ -20,7 +26,6 @@
   const useExampleBtn   = document.getElementById('use-example-btn');
   const queryBtn        = document.getElementById('ai-query-btn');
   const clearBtn        = document.getElementById('clear-console-btn');
-  const responsePanel   = document.getElementById('response-panel');
   const emptyState      = document.getElementById('console-empty');
   const loadingState    = document.getElementById('console-loading');
   const contentState    = document.getElementById('console-content');
@@ -39,7 +44,7 @@
   const ctxKickoff  = document.getElementById('ctx-kickoff');
   const ctxSeverity = document.getElementById('ctx-severity');
 
-  // ── Domain selection ──────────────────────────────────────────────────────
+  // -- Domain selection ------------------------------------------------------
 
   function updateExample(domainId) {
     const domain = domainMap[domainId];
@@ -89,7 +94,7 @@
     });
   }
 
-  // ── State rendering ───────────────────────────────────────────────────────
+  // -- State rendering -------------------------------------------------------
 
   function show(el) { el?.classList.remove('d-none'); }
   function hide(el) { el?.classList.add('d-none'); }
@@ -114,7 +119,7 @@
     }
 
     if (responseText) {
-      // Format the response — preserve paragraph breaks, bold headers
+      // Format the response - preserve paragraph breaks, bold headers
       const formatted = (data.response || '')
         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
         .replace(/\n\n+/g, '</p><p>')
@@ -133,7 +138,7 @@
     }
   }
 
-  // ── Query submission ──────────────────────────────────────────────────────
+  // -- Query submission ------------------------------------------------------
 
   async function submitQuery() {
     const domainId   = domainSelect?.value;
@@ -203,10 +208,15 @@
   if (copyBtn) {
     copyBtn.addEventListener('click', function () {
       const text = responseText?.innerText || '';
-      navigator.clipboard.writeText(text).then(function () {
-        copyBtn.textContent = 'Copied!';
-        setTimeout(() => { copyBtn.textContent = 'Copy Response'; }, 2000);
-      });
+      navigator.clipboard.writeText(text)
+        .then(function () {
+          copyBtn.textContent = 'Copied!';
+          setTimeout(function () { copyBtn.textContent = 'Copy Response'; }, 2000);
+        })
+        .catch(function () {
+          copyBtn.textContent = 'Copy failed';
+          setTimeout(function () { copyBtn.textContent = 'Copy Response'; }, 2000);
+        });
     });
   }
 
@@ -220,7 +230,7 @@
     });
   }
 
-  // ── Session history ───────────────────────────────────────────────────────
+  // -- Session history -------------------------------------------------------
 
   function addToHistory(domainId, situation, result) {
     const entry = {
@@ -273,11 +283,17 @@
     });
   }
 
-  // ── Boot ─────────────────────────────────────────────────────────────────
+  // -- Boot -----------------------------------------------------------------
 
-  document.addEventListener('DOMContentLoaded', function () {
+  function boot() {
     initDomainFromURL();
     renderHistory();
-  });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
 
 }());

@@ -4,7 +4,7 @@ import tempfile
 import pytest
 
 # Use a temp DB for tests to avoid polluting production data
-os.environ["DATABASE_PATH"] = os.path.join(tempfile.gettempdir(), "cloudcostai_test.db")
+os.environ["DATABASE_PATH"] = os.path.join(tempfile.gettempdir(), "stadiumiq_test.db")
 
 
 @pytest.fixture(scope="module")
@@ -25,7 +25,7 @@ def client():
 def test_homepage_loads(client):
     response = client.get("/")
     assert response.status_code == 200
-    assert b"CloudCostAI" in response.data
+    assert b"StadiumIQ" in response.data
 
 
 def test_homepage_contains_form(client):

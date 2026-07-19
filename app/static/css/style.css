@@ -385,7 +385,7 @@ body {
   font-family: var(--font);
   font-size: 0.82rem;
   font-weight: 500;
-  color: var(--text-3);
+  color: var(--text-2);
   cursor: pointer;
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
@@ -393,7 +393,7 @@ body {
   border-radius: var(--radius-xs) var(--radius-xs) 0 0;
 }
 
-.tab-btn:hover { color: var(--text-2); }
+.tab-btn:hover { color: var(--text); }
 
 .tab-btn.active {
   color: var(--accent-2);

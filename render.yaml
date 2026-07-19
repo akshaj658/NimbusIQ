@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: cloudcostai-web
+    name: stadiumiq-web
     env: python
     plan: free
     region: oregon
@@ -11,6 +11,6 @@ services:
       - key: FLASK_ENV
         value: production
       - key: DATABASE_PATH
-        value: "cloudcostai.db"
+        value: "stadiumiq.db"
       - key: SECRET_KEY
-        value: "cloudcostai-production-secret"
+        generateValue: true

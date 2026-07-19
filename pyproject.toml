@@ -3,9 +3,9 @@ requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "cloudcostai"
-version = "0.1.0"
-description = "Cloud cost prediction project"
+name = "stadiumiq"
+version = "1.0.0"
+description = "AI-powered FIFA World Cup 2026 stadium operations intelligence platform"
 requires-python = ">=3.10"
 
 [tool.setuptools]
