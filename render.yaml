@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: cloudcostai-web
+    env: python
+    plan: free
+    region: oregon
+    branch: main
+    buildCommand: "python -m pip install --upgrade pip setuptools wheel && pip install -r requirements.txt"
+    startCommand: "gunicorn \"app.app:app\" --worker-class gevent --workers 2 --threads 4 --timeout 120"
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: DATABASE_PATH
+        value: "cloudcostai.db"
+      - key: SECRET_KEY
+        value: "cloudcostai-production-secret"

@@ -1,0 +1,43 @@
+# === Python ===
+__pycache__/
+*.py[cod]
+*.pyo
+
+# === Build / packaging ===
+build/
+dist/
+*.egg-info/
+
+# === Virtual environments ===
+.venv/
+env/
+venv/
+
+# === Environment secrets ===
+.env
+
+# === Database ===
+cloudcostai.db
+
+# === Pytest ===
+.pytest_cache/
+
+# === IDEs ===
+.vscode/
+.idea/
+
+# === OS files ===
+.DS_Store
+Thumbs.db
+
+# === Logs ===
+logs/*.log
+
+# === Misc python version files ===
+root.python-version
+runtime.txt
+
+# === Node (just in case) ===
+node_modules/
+
+# Note: model artifacts in `models/` are intentionally tracked for deployment.

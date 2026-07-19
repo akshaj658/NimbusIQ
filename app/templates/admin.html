@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NimbusIQ — Dashboard</title>
+  <meta name="description" content="NimbusIQ prediction analytics and history dashboard.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="page">
+
+  <!-- ── Topbar ── -->
+  <header class="topbar">
+    <a class="topbar-left" href="{{ url_for('main.index') }}">
+      <span class="logo-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      </span>
+      <span>
+        <span class="logo-name">NimbusIQ</span>
+        <span class="logo-tag"> &nbsp;·&nbsp; Dashboard</span>
+      </span>
+    </a>
+    <nav class="topbar-right">
+      <a href="{{ url_for('main.index') }}" class="nav-link">Estimates</a>
+      <a href="{{ url_for('main.admin') }}" class="nav-link active">Dashboard</a>
+      <a href="{{ url_for('main.download') }}{% if search %}?q={{ search }}{% endif %}" class="btn btn-ghost btn-sm">Export CSV</a>
+      <button id="theme-toggle" class="icon-btn" type="button" aria-label="Toggle theme">
+        <svg id="icon-sun" viewBox="0 0 24 24" style="display:none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/></svg>
+        <svg id="icon-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+    </nav>
+  </header>
+
+  <!-- ── Dashboard body ── -->
+  <div class="admin-wrap">
+
+    <!-- Header row -->
+    <div class="admin-header fade-up">
+      <div>
+        <p class="admin-eyebrow">Analytics</p>
+        <h1 class="admin-title">Prediction Dashboard</h1>
+      </div>
+      <a class="btn btn-ghost btn-sm" href="{{ url_for('main.index') }}">Back to Estimates</a>
+    </div>
+
+    <!-- Search bar -->
+    <div class="search-bar fade-up">
+      <input id="search-input" type="text" name="q" value="{{ search or '' }}" placeholder="Filter by service or region...">
+      <button id="search-btn" class="btn btn-primary btn-sm" type="button">Search</button>
+      <button id="export-btn" class="btn btn-ghost btn-sm" type="button">Export CSV</button>
+    </div>
+
+    <!-- Stats row -->
+    <div class="stats-row fade-up">
+      <div class="stat-card">
+        <p class="stat-label">Total Predictions</p>
+        <p class="stat-value">{{ stats.total_predictions }}</p>
+      </div>
+      <div class="stat-card">
+        <p class="stat-label">Latest Estimate</p>
+        <p class="stat-value">{% if stats.latest_prediction %}&#8377; {{ '%.2f'|format(stats.latest_prediction.predicted_cost) }}{% else %}—{% endif %}</p>
+      </div>
+      <div class="stat-card">
+        <p class="stat-label">Average Cost</p>
+        <p class="stat-value">&#8377; {{ '%.2f'|format(stats.average_predicted_cost) }}</p>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-row fade-up">
+      <div class="chart-card">
+        <p class="chart-label">Predictions per Day</p>
+        <canvas id="daily-chart" height="200"></canvas>
+      </div>
+      <div class="chart-card">
+        <p class="chart-label">Top Services</p>
+        <canvas id="service-chart" height="200"></canvas>
+      </div>
+      <div class="chart-card span-2">
+        <p class="chart-label">Regions Distribution</p>
+        <canvas id="region-chart" height="120"></canvas>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-card fade-up">
+      <div class="panel-header" style="padding: 0 0 12px;">
+        <span class="panel-title">All Predictions</span>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table" aria-live="polite">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Timestamp</th>
+              <th>Service</th>
+              <th>Region</th>
+              <th>Cost (INR)</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="history-tbody">
+            {% for item in history %}
+            <tr>
+              <td>{{ item.id }}</td>
+              <td>{{ item.timestamp }}</td>
+              <td>{{ item.service_name }}</td>
+              <td>{{ item.region }}</td>
+              <td>&#8377; {{ '%.2f'|format(item.predicted_cost) }}</td>
+              <td><button class="del-btn" data-id="{{ item.id }}" type="button">Remove</button></td>
+            </tr>
+            {% else %}
+            <tr id="empty-row">
+              <td colspan="6" style="color:var(--text-3); font-size:0.8rem; padding: 18px 12px;">No predictions recorded.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /admin-wrap -->
+</div><!-- /page -->
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script>
+(function () {
+  'use strict';
+  const daily   = {{ stats.predictions_per_day | tojson }};
+  const service = {{ stats.top_services | tojson }};
+  const region  = {{ stats.top_regions | tojson }};
+
+  const isDark = () => document.documentElement.getAttribute('data-theme') !== 'light';
+  const gridColor = () => isDark() ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+  const tickColor = () => isDark() ? '#636a8a' : '#8b93b8';
+
+  const palette = ['#6366f1','#818cf8','#a5b4fc','#4f46e5','#c7d2fe','#e0e7ff'];
+
+  const baseOpts = (hasLegend) => ({
+    responsive: true,
+    plugins: {
+      legend: { display: !!hasLegend, position: 'bottom', labels: { color: tickColor(), boxWidth: 12, padding: 14, font: { size: 11 } } },
+      tooltip: { callbacks: {} }
+    },
+    scales: {
+      x: { ticks: { color: tickColor(), font: { size: 11 } }, grid: { color: gridColor() } },
+      y: { beginAtZero: true, ticks: { color: tickColor(), font: { size: 11 }, stepSize: 1 }, grid: { color: gridColor() } }
+    }
+  });
+
+  window.dailyChart = new Chart(document.getElementById('daily-chart'), {
+    type: 'bar',
+    data: { labels: daily.labels, datasets: [{ label: 'Predictions', data: daily.values, backgroundColor: palette[0], borderRadius: 5, borderSkipped: false }] },
+    options: baseOpts(false)
+  });
+
+  window.serviceChart = new Chart(document.getElementById('service-chart'), {
+    type: 'doughnut',
+    data: { labels: service.labels, datasets: [{ data: service.values, backgroundColor: palette, borderWidth: 0 }] },
+    options: { responsive: true, plugins: { legend: { display: true, position: 'bottom', labels: { color: tickColor(), boxWidth: 10, padding: 12, font: { size: 11 } } } } }
+  });
+
+  window.regionChart = new Chart(document.getElementById('region-chart'), {
+    type: 'bar',
+    data: { labels: region.labels, datasets: [{ label: 'Count', data: region.values, backgroundColor: palette[1], borderRadius: 4, borderSkipped: false }] },
+    options: { ...baseOpts(false), indexAxis: 'y' }
+  });
+
+  async function refreshCharts() {
+    try {
+      const res = await fetch('/api/stats');
+      if (!res.ok) return;
+      const d = await res.json();
+      [['dailyChart','predictions_per_day'],['serviceChart','top_services'],['regionChart','top_regions']].forEach(([c, k]) => {
+        if (window[c] && d[k]) {
+          window[c].data.labels = d[k].labels;
+          window[c].data.datasets[0].data = d[k].values;
+          window[c].update();
+        }
+      });
+    } catch (_) {}
+  }
+
+  setInterval(refreshCharts, 30_000);
+}());
+</script>
+</body>
+</html>
